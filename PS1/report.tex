@@ -14,9 +14,8 @@
 \usepackage{natbib} % for bibliography
 \input newcommand.tex
 \bibliographystyle{apalike}
-\setlength{\parindent}{0pt} % remove the automatic indentation % for problem set
-\renewcommand{\thesection}{Question \arabic{section}}
-\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}}
+\setlength{\parindent}{0pt} \renewcommand{\thesection}{Question \arabic{section}}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}}% remove the automatic indentation % for problem set
 
 % Settings for page number in the footer
 \pagestyle{fancy}
@@ -26,9 +25,9 @@
 \renewcommand{\footrulewidth}{0pt}
 
 \title{\textbf{Estimate Dynamic Models with CCP} \\
-\vspace{.3cm}
-\large Problem Set 1 \\
-Empirical Industrial Organization 2025 Srping}
+    \vspace{.3cm}
+    \large Problem Set 1 \\
+    Empirical Industrial Organization 2025 Srping}
 \author{Zixuan}
 \date{\today}
 
@@ -37,12 +36,105 @@ Empirical Industrial Organization 2025 Srping}
 
 \setcounter{page}{1}
 
-\paragraph{Latent profit}
+\paragraph{Utility (Profit)}
+The profit function of the Harold Zurcher is
+\begin{equation*}
+    \pi(s,Y) = (-RC)Y + (-\mu s)(1 - Y) = (-RC + \mu s)Y - \mu s
+\end{equation*}
+The realized profit is
+\begin{equation*}
+    \Pi(s,Y,\nu_0,\nu_1) = u(s,Y) + \nu_Y
+\end{equation*}
 
-\begin{equation}
-    \pi(s) = (-RC + \nu_1)Y + (-\mu s + \nu_0)(1 - Y)
-\end{equation}
+Since only the difference of profit matters for the replacement decision, we
+can normalize such that
+\begin{align*}
+    u(s,Y)      & = (-RC + \mu s)Y                              \\
+    v(s,Y, \nu) & =  \Pi(s,Y,\nu_0,\nu_1) -\Pi(s,0,\nu_0,\nu_1) \\
+                & = (-RC + \mu s)Y + \nu
+\end{align*}
 
-\paragraph{Variables}
+\paragraph{Variables} For \textbf{observed variables}, we have
+\begin{itemize}
+    \item $s$: the state variable, the mileage at the end of period $t$
+    \item $Y$: the decision variable, the decision to replace the bus at the end of period $t$
+\end{itemize}
+For \textbf{unobserved variables}, we have $\nu$.
+\paragraph{State transition} The state variable $s$ evolves according to this
+transition function
+\begin{equation*}
+    s_{t+1} = s_t + \epsilon_{t+1} \quad \epsilon_{t+1} \sim N(\rho, \sigma_{\rho}^2)
+\end{equation*}
+\paragraph{Parameters} The profit function parameters:
+\begin{itemize}
+    \item $\mu$: the cost of maintaining the bus
+    \item $RC$: the replacement cost of the bus
+\end{itemize}
+The state transition parameters: $\rho$ and $\sigma_{\rho}^2$.
+Discount factor $\beta=0.99$ is given.
+
+\paragraph{Value function} The value function is
+\begin{equation*}
+    \begin{split}
+        V(s, \nu) & = \max_{Y} \left\{ v(s,Y,\nu) + \beta \mathbb{E}[V(s', \nu')|s,Y] \right\}\\
+        & = \max_{Y} \left\{ u(s,Y)+\nu_Y + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')] f(s'|s) ds' \right\}\\
+    \end{split}
+\end{equation*}
+
+To understand this value function, notice that at the end of each period $t$
+Harold Zurcher is essentially comparing the \textbf{continuation value} from
+replacing $Y=1$ and that from not replacing $Y=0$. We define the
+\textbf{continuation value} as $\tilde{v}(s,Y,\nu)$. The value function is the
+maximum of them.
+\begin{align*}
+    \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu_1=  (-RC + \mu s)Y +\nu_1 + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,1] f(s'|s) ds' \\
+    \tilde{v}(s,0,\nu) & = \tilde{u}(s,0) + \nu_0= \nu_0 + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,0] f(s'|s) ds'
+\end{align*}
+Therefore the value function can be rewritten as
+\begin{equation*}
+    V(s, \nu) = \max_Y\left\{ \tilde{v}(s,1,\nu), \tilde{v}(s,0,\nu) \right\}
+\end{equation*}
+
+If we know the $\tilde{u}(s,1)$ and $\tilde{u}(s,0)$, and assume $\nu_1,\nu_0$
+are iid from T1EV, we are back to the static logit discrete choice model such
+that
+\begin{equation*}
+    \Pr(Y=1|s) = \frac{\exp(\tilde{u}(s,1))}{\exp(\tilde{u}(s,1)) + \exp(\tilde{u}(s,0))}
+\end{equation*}
+
+We follow \citet{bajari2007estimating} to approximate the continuation value
+$\tilde{v}$ by
+\begin{align*}
+    \tilde{v}(s,1,\nu) = \tilde{u}(s,1) + \nu_1 = x_{i1}^1\beta_1 + x_{i1}^2\beta_2 + x_{i1}^3\beta_3+ \nu_1 \\
+    \tilde{v}(s,0,\nu) = \tilde{u}(s,0) + \nu_0 = x_{i0}^1\beta_1 + x_{i0}^2\beta_2 + x_{i0}^3\beta_3+ \nu_0
+\end{align*}
+Therefore, we obtain $\beta_1/\beta_3=RC, \beta_2/\beta_3=\mu$.
+
+The optimal $\theta^*$ is the one that maximizes the likelihood function
+\begin{equation*}
+    \max_{\theta} \sum_{i=1}^N \sum_{t=1}^T \ln \Pr(Y_{it}|s_{it},\theta)
+\end{equation*}
+
+% \paragraph{Expected value function} We define the expected value function as
+% \begin{equation*}
+%     \bar{V}(s)=\int \max_{Y} \left\{ u(s,Y)+\nu_Y + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')] f(s') ds' \right\} f(\nu_0,\nu_1) d(\nu_0,\nu_1)
+% \end{equation*}
+% From the property of $\nu_0,\nu_1$ as well as $\nu_0-\nu_1$ from T1EV, we have
+% \begin{equation*}\label{eq:full}
+%     \bar{V}(s)=\gamma+\ln\left(\sum_{Y} \exp\left(u(s,Y)+\beta\int \bar{V}(s') f(s'|s) ds'\right)\right)
+% \end{equation*}
+% Recall what we do in the CCP estimation algorithm, we would rewrite Equation~\ref{eq:full} as
+% \begin{equation*}\label{eq:ccp}
+%     \bar{V}(s)=\sum_{Y\in\set{0,1}} \Pr(Y|s) \left(u(s,Y)+\mathbb{E}_{\nu_Y}[\nu_Y|s, Y]+ \beta \int \bar{V}(s') f(s'|s) ds'\right)
+% \end{equation*}
+% Replacing $\mathbb{E}_{\nu_Y}[\nu_Y|s, Y]$ with $\gamma_Y-\ln\Pr(Y|s)$, we have
+% \begin{equation*}
+%     \begin{split}
+%         \bar{V}(s)&=\gamma+\Pr(Y=0|s) \left(u(s,0)-\ln\Pr(Y=0|s)+ \beta \int \bar{V}(s') f(s'|s) ds'\right)\\
+%         & +\Pr(Y=1|s) \left(u(s,1)-\ln\Pr(Y=1|s)+ \beta \int \bar{V}(s') f(s'|s) ds'\right)
+%     \end{split}
+% \end{equation*}
+
+\bibliography{../References/ref.bib}
 
 \end{document}
