@@ -28,8 +28,25 @@ summary(ccp_probit3)
 ccp_probitlog <- glm(choice ~ log(mileage), data = dt, family = binomial(link = "probit"))
 summary(ccp_probitlog)
 
+# compare
+anova(ccp_probit1, ccp_probit2, test = "Chisq")
+anova(ccp_probit1, ccp_probit3, test = "Chisq")
+anova(ccp_probit2, ccp_probit3, test = "Chisq")
+
 # graph the probability of investment as a function of mileage
-library(ggplot2)
+pacman::p_load(ggplot2, extrafont)
+font_import(pattern = "times") # Only import Times New Roman
+loadfonts(device = "pdf") # Load fonts for PDF output
+
+# set the global theme to use Times New Roman
+theme_set(
+    theme_minimal(base_family = "Times New Roman") +
+        theme(
+            plot.title = element_text(size = 22, hjust = 0.5),
+            axis.title = element_text(size = 18),
+            axis.text = element_text(size = 18)
+        )
+)
 
 # calculate the predicted probability
 new_data_plot <- data.table(mileage = seq(0, 40, 0.1))
@@ -57,14 +74,6 @@ graph <- ggplot(new_data_plot_long, aes(x = mileage, y = Probability, color = Mo
         x = "Mileage",
         y = "Probability",
         color = "Model"
-    ) +
-    # theme_minimal() +
-    theme(
-        plot.title = element_text(size = 22, hjust = 0.5),
-        axis.title = element_text(size = 20),
-        axis.text = element_text(size = 18),
-        legend.title = element_text(size = 18),
-        legend.text = element_text(size = 18)
     )
 
 ggsave("Figures/ccp_probit.png", graph)
@@ -137,10 +146,9 @@ v_0_matrix <- simulate(dt$mileage, 0, K = 10, T = 100, beta = 0.99)
 # tabulate the average of six variables x_i1(1),x_i2(1),x_i3(1),x_i1(0),x_i2(0),x_i3(0)
 simulation_average <- data.table(colMeans(v_1_matrix), colMeans(v_0_matrix))
 colnames(simulation_average) <- c("Replace", "Non Replace")
-rownames(simulation_average) <- c("x_i1", "x_i2", "x_i3")
+rownames(simulation_average) <- c("$x_i^1$", "$x_i^2$", "$x_i^3$")
 # print the table
-library(xtable)
-print(xtable(simulation_average), floating = FALSE, type = "latex", file = "Tables/simulation_average.tex")
+print(xtable::xtable(simulation_average), floating = FALSE, type = "latex", file = "Tables/q3_sim_average.tex", sanitize.rownames.function = identity)
 
 # ---- q4: estimate the parameters of the model
 v_diff_matrix <- v_1_matrix - v_0_matrix
@@ -150,8 +158,7 @@ logit <- glm(choice ~ x_i1 + x_i2 - 1, offset = x_i3, data = dt2, family = binom
 summary(logit)
 dt2[, prob := predict(logit, dt2, type = "response")]
 saveRDS(dt2, "Data/Out/data_q3q4.RDS")
-
-
+stargazer::stargazer(logit, type = "latex", float = FALSE, covariate.labels = c("RC", "$\\mu$"), out = "Tables/q4_est_results.tex")
 # ---- q5: graph the probability of investment as a function of mileage
 new_data_plot <- data.table(mileage = seq(0, 40, 0.1))
 
@@ -168,12 +175,7 @@ saveRDS(new_data_plot, "Data/Out/data_q5.RDS")
 
 graph2 <- ggplot(new_data_plot, aes(x = mileage)) +
     geom_point(aes(y = prob), color = "#FF0000") +
-    labs(title = "Conditional Choice Probability", x = "Mileage", y = "Probability") +
-    theme(
-        plot.title = element_text(size = 22, hjust = 0.5),
-        axis.title = element_text(size = 18),
-        axis.text = element_text(size = 18)
-    )
+    labs(title = "Conditional Choice Probability", x = "Mileage", y = "Probability")
 
 ggsave("Figures/ccp_dynamic.png", graph2)
 ggsave("Figures/ccp_dynamic.pdf", graph2)
