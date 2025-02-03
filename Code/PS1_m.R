@@ -20,11 +20,11 @@ simulate_m <- function(initial_mileage, initial_y, K, T, beta) {
     for (k in 1:K) {
         mileage <- initial_mileage
         for (t in 2:T) {
-            mileage <- (1 - y_array[, t - 1, k]) * (mileage + epsilon_array[, t, k])
+            mileage <- (1 - y_array[, t - 1, k]) * (mileage) + epsilon_array[, t, k]
             s_array[, t, k] <- mileage
             y_hat <- predict(ccp_probit1, data.frame(mileage = mileage), type = "response")
-            logp_array[, t, k] <- log(y_hat)
             y_array[, t, k] <- rbinom(num_row, 1, y_hat)
+            logp_array[, t, k] <- log(y_hat * y_array[, t, k] + (1 - y_hat) * (1 - y_array[, t, k]))
         }
         beta_vec <- beta^(0:(T - 1))
         x_i1_matrix[, k] <- (y_array[, , k] %*% beta_vec)

@@ -53,7 +53,7 @@ graph <- ggplot(new_data_plot_long, aes(x = mileage, y = Probability, color = Mo
     geom_line() +
     scale_color_manual(values = color_map) +
     labs(
-        title = "(Probit) Reduced Form of Conditional Choice Probability",
+        title = "Reduced Form of Conditional Choice Probability",
         x = "Mileage",
         y = "Probability",
         color = "Model"
@@ -78,14 +78,11 @@ dt <- readRDS("Data/RUST.RDS")
 dt[, mileage_diff := mileage - shift(mileage, n = 1), by = id]
 rho <- dt[state == 0, mean(mileage_diff)]
 sigma_rho <- dt[state == 0, var(mileage_diff)]
+save.image("Data/Out/q1q2.RData")
 
-# q3: estimate continuation value via simulation
-
+# ---- q3: estimate continuation value via simulation
+load("Data/Out/q1q2.RData")
 # for every mileage $s_{it}$, I calculate two continuation values $V_{it}(1)$ and $V_{it}(0)$
-
-num_bus <- dt[state == 2, .N] # 58 buses
-num_obs <- dt[, .N] # 7308 observations
-num_period <- num_obs / num_bus # 126 observations per bus
 
 # simulation parameters
 K <- 10
@@ -115,15 +112,12 @@ simulate <- function(initial_mileage, initial_y, K, T, beta) {
     logp_array[, 1, ] <- outer(rep(0, num_row), rep(1, K))
     for (k in 1:K) {
         mileage <- initial_mileage
-        # y_array[, 1, k] <- rep(initial_y, num_row)
-        # s_array[, 1, k] <- initial_mileage
-        # logp_array[, 1, k] <- rep(0, num_row)
         for (t in 2:T) {
             mileage <- (1 - y_array[, t - 1, k]) * (mileage + epsilon_array[, t, k])
             s_array[, t, k] <- mileage
             y_hat <- predict(ccp_probit1, data.frame(mileage = mileage), type = "response")
-            logp_array[, t, k] <- log(y_hat)
             y_array[, t, k] <- rbinom(num_row, 1, y_hat)
+            logp_array[, t, k] <- log(y_hat * y_array[, t, k] + (1 - y_hat) * (1 - y_array[, t, k]))
         }
         beta_vec <- beta^(0:(T - 1))
         x_i1_matrix[, k] <- (-(y_array[, , k] %*% beta_vec))
@@ -133,14 +127,12 @@ simulate <- function(initial_mileage, initial_y, K, T, beta) {
     x_i1 <- rowMeans(x_i1_matrix)
     x_i2 <- rowMeans(x_i2_matrix)
     x_i3 <- rowMeans(x_i3_matrix)
-    return(list(x = cbind(x_i1, x_i2, x_i3), y = y_array, s = s_array, logp = logp_array))
+    return(cbind(x_i1, x_i2, x_i3))
 }
 
 # store the simulation results
-v_1_res <- simulate(dt$mileage, 1, K = 10, T = 100, beta = 0.99)
-v_0_res <- simulate(dt$mileage, 0, K = 10, T = 100, beta = 0.99)
-v_1_matrix <- v_1_res$x
-v_0_matrix <- v_0_res$x
+v_1_matrix <- simulate(dt$mileage, 1, K = 10, T = 100, beta = 0.99)
+v_0_matrix <- simulate(dt$mileage, 0, K = 10, T = 100, beta = 0.99)
 
 # tabulate the average of six variables x_i1(1),x_i2(1),x_i3(1),x_i1(0),x_i2(0),x_i3(0)
 simulation_average <- data.table(colMeans(v_1_matrix), colMeans(v_0_matrix))
@@ -167,8 +159,8 @@ new_data_plot <- data.table(mileage = seq(0, 40, 0.1))
 # calculating the predicted probability requires continuation value for v1 and v0
 # v1 and v0 are calculated by simulation
 
-v_1_matrix_plot <- simulate(new_data_plot$mileage, 1, K = 10, T = 100, beta = 0.99)$x
-v_0_matrix_plot <- simulate(new_data_plot$mileage, 0, K = 10, T = 100, beta = 0.99)$x
+v_1_matrix_plot <- simulate(new_data_plot$mileage, 1, K = 10, T = 100, beta = 0.99)
+v_0_matrix_plot <- simulate(new_data_plot$mileage, 0, K = 10, T = 100, beta = 0.99)
 v_matrix_plot <- v_1_matrix_plot - v_0_matrix_plot
 new_data_plot <- cbind(new_data_plot, v_matrix_plot)
 new_data_plot[, prob := predict(logit, new_data_plot, type = "response")]
@@ -177,13 +169,11 @@ saveRDS(new_data_plot, "Data/Out/data_q5.RDS")
 graph2 <- ggplot(new_data_plot, aes(x = mileage)) +
     geom_point(aes(y = prob), color = "#FF0000") +
     labs(title = "Conditional Choice Probability", x = "Mileage", y = "Probability") +
-    theme_minimal()
-
-graph2 <- graph2 + theme(
-    plot.title = element_text(size = 22, hjust = 0.5),
-    axis.title = element_text(size = 18),
-    axis.text = element_text(size = 18)
-)
+    theme(
+        plot.title = element_text(size = 22, hjust = 0.5),
+        axis.title = element_text(size = 18),
+        axis.text = element_text(size = 18)
+    )
 
 ggsave("Figures/ccp_dynamic.png", graph2)
 ggsave("Figures/ccp_dynamic.pdf", graph2)
