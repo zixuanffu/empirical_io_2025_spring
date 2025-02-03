@@ -50,7 +50,7 @@ Since only the difference of profit matters for the replacement decision, we
 can normalize such that
 \begin{align*}
     u(s,Y)      & = (-RC + \mu s)Y                              \\
-    v(s,Y, \nu) & =  \Pi(s,Y,\nu_0,\nu_1) -\Pi(s,0,\nu_0,\nu_1) \\
+    v(s,Y, \nu) & =  \Pi(s,1,\nu_0,\nu_1) -\Pi(s,0,\nu_0,\nu_1) \\
                 & = (-RC + \mu s)Y + \nu
 \end{align*}
 
@@ -87,17 +87,16 @@ replacing $Y=1$ and that from not replacing $Y=0$. We define the
 \textbf{continuation value} as $\tilde{v}(s,Y,\nu)$. The value function is the
 maximum of them.
 \begin{align*}
-    \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu_1=  (-RC + \mu s)Y +\nu_1 + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,1] f(s'|s) ds' \\
-    \tilde{v}(s,0,\nu) & = \tilde{u}(s,0) + \nu_0= \nu_0 + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,0] f(s'|s) ds'
+    \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu=  (-RC + \mu s) +\nu + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,1] f(s'|s) ds' \\
+    \tilde{v}(s,0,\nu) & = \tilde{u}(s,0) = \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,0] f(s'|s) ds'
 \end{align*}
 Therefore the value function can be rewritten as
 \begin{equation*}
     V(s, \nu) = \max_Y\left\{ \tilde{v}(s,1,\nu), \tilde{v}(s,0,\nu) \right\}
 \end{equation*}
 
-If we know the $\tilde{u}(s,1)$ and $\tilde{u}(s,0)$, and assume $\nu_1,\nu_0$
-are iid from T1EV, we are back to the static logit discrete choice model such
-that
+If we know the $\tilde{u}(s,1)$ and $\tilde{u}(s,0)$, and assume $\nu$ are iid
+from T1EV, we are back to the static logit discrete choice model such that
 \begin{equation*}
     \Pr(Y=1|s) = \frac{\exp(\tilde{u}(s,1))}{\exp(\tilde{u}(s,1)) + \exp(\tilde{u}(s,0))}
 \end{equation*}
@@ -105,10 +104,16 @@ that
 We follow \citet{bajari2007estimating} to approximate the continuation value
 $\tilde{v}$ by
 \begin{align*}
-    \tilde{v}(s,1,\nu) = \tilde{u}(s,1) + \nu_1 = x_{i1}^1\beta_1 + x_{i1}^2\beta_2 + x_{i1}^3\beta_3+ \nu_1 \\
-    \tilde{v}(s,0,\nu) = \tilde{u}(s,0) + \nu_0 = x_{i0}^1\beta_1 + x_{i0}^2\beta_2 + x_{i0}^3\beta_3+ \nu_0
+    \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu = x_{i1}^1\beta_1 + x_{i1}^2\beta_2 + x_{i1}^3+ \nu \\
+    \tilde{v}(s,0,\nu) & = \tilde{u}(s,0)  = x_{i0}^1\beta_1 + x_{i0}^2\beta_2 + x_{i0}^3
 \end{align*}
-Therefore, we obtain $\beta_1/\beta_3=RC, \beta_2/\beta_3=\mu$.
+where
+\begin{itemize}
+    \item $x_{i}^1 = \frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T Y_{it}$
+    \item $x_{i}^2 = \frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T s_{it}Y_{it}$
+    \item $x_{i}^3 = \frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T (\gamma-\ln(\Pr(Y_{it}|s_{it})))$
+\end{itemize}
+Therefore, we obtain $RC=-\beta_1, \mu=\beta_2$.
 
 The optimal $\theta^*$ is the one that maximizes the likelihood function
 \begin{equation*}
