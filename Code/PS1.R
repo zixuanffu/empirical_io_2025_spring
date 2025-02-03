@@ -159,6 +159,7 @@ summary(logit)
 dt2[, prob := predict(logit, dt2, type = "response")]
 saveRDS(dt2, "Data/Out/data_q3q4.RDS")
 
+
 # ---- q5: graph the probability of investment as a function of mileage
 new_data_plot <- data.table(mileage = seq(0, 40, 0.1))
 
@@ -166,8 +167,8 @@ new_data_plot <- data.table(mileage = seq(0, 40, 0.1))
 # calculating the predicted probability requires continuation value for v1 and v0
 # v1 and v0 are calculated by simulation
 
-v_1_matrix_plot <- simulate(new_data_plot$mileage, 1, K = 10, T = 100, beta = 0.99)
-v_0_matrix_plot <- simulate(new_data_plot$mileage, 0, K = 10, T = 100, beta = 0.99)
+v_1_matrix_plot <- simulate(new_data_plot$mileage, 1, K = 10, T = 100, beta = 0.99)$x
+v_0_matrix_plot <- simulate(new_data_plot$mileage, 0, K = 10, T = 100, beta = 0.99)$x
 v_matrix_plot <- v_1_matrix_plot - v_0_matrix_plot
 new_data_plot <- cbind(new_data_plot, v_matrix_plot)
 new_data_plot[, prob := predict(logit, new_data_plot, type = "response")]
