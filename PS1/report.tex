@@ -52,7 +52,8 @@ The realized profit is
     \item $Y$: the decision variable, the decision to replace the bus at the end of period $t$
 \end{itemize}
 For \textbf{unobserved variables}, we have $\nu_0,\nu_1$.
-\paragraph{State transition} The state variable $s$ evolves according to this transition function
+\paragraph{State transition} The state variable $s$ evolves according to this
+transition function
 \begin{equation*}
     s_{t+1} = s_t + \epsilon_{t+1} \quad \epsilon_{t+1} \sim N(\rho, \sigma_{\rho}^2)
 \end{equation*}
@@ -68,20 +69,19 @@ Discount factor $\beta=0.99$ is given.
 \begin{equation*}
     \begin{split}
         V(s, \nu) & = \max_{Y} \left\{ v(s,Y,\nu) + \beta \mathbb{E}[V(s', \nu')|s,Y] \right\}                       \\
-                  & = \max_{Y} \left\{ u(s,Y)+\nu_Y + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')] f(s'|s) ds' \right\} \\
+        & = \max_{Y} \left\{ u(s,Y)+\nu_Y + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')] f(s'|s) ds' \right\} \\
     \end{split}
 \end{equation*}
 
 To understand this value function, notice that at the end of each period $t$
 Harold Zurcher is essentially comparing the \textbf{continuation value} from
 replacing $Y=1$ and that from not replacing $Y=0$. We define the
-\textbf{continuation value} as $\tilde{v}(s,Y,\nu)$. The value function is the
-maximum of them.
+\textbf{continuation value} as $\tilde{v}(s,Y,\nu)$.
 \begin{align*}
     \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu_1=  (-RC + \mu s) +\nu_1 + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,1] f(s'|s) ds' \\
     \tilde{v}(s,0,\nu) & = \tilde{u}(s,0)+\nu_0 = \nu_0+\beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,0] f(s'|s) ds'
 \end{align*}
-Therefore the value function can be rewritten as
+Therefore the value function, being the maximum of the two, can be rewritten as
 \begin{equation*}
     V(s, \nu) = \max_Y\left\{ \tilde{v}(s,1,\nu), \tilde{v}(s,0,\nu) \right\}
 \end{equation*}
@@ -168,7 +168,7 @@ $s$, we first simulate for each $s\in [0,40]$ exactly as in
 ~\ref{sec:simulation}. Then we use the estimated parameters $\theta^*$ to
 compute the CCPs. The results are shown in Figure~\ref{fig:ccp_dynamic}.
 Alternatively, one could take the parameters $\theta^*$ and solve the dynamic
-programming problem analytically as in \citet{rust1987optimal}. Solving for
+programming problem analytically as in \citet{rust1987optimal}. Solve for
 $\bar{V}(s)$ from Equation~\ref{eq:exp_v} and then compute CCP from
 Equation~\ref{eq:ccp}.
 

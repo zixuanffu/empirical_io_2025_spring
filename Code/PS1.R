@@ -1,6 +1,6 @@
 rm(list = ls())
 pacman::p_load(data.table)
-
+pacman::p_load(ggplot2, extrafont)
 # ---- clean the data
 dt <- fread("Data/RUST.DAT")
 setnames(dt, new = c("mileage", "state"))
@@ -34,7 +34,6 @@ anova(ccp_probit1, ccp_probit3, test = "Chisq")
 anova(ccp_probit2, ccp_probit3, test = "Chisq")
 
 # graph the probability of investment as a function of mileage
-pacman::p_load(ggplot2, extrafont)
 font_import(pattern = "times") # Only import Times New Roman
 loadfonts(device = "pdf") # Load fonts for PDF output
 
