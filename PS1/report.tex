@@ -27,7 +27,7 @@
 \title{\textbf{Estimate Dynamic Models with CCP} \\
     \vspace{.3cm}
     \large Problem Set 1 \\
-    Empirical Industrial Organization 2025 Srping}
+    Empirical Industrial Organization 2025 Spring}
 \author{Zixuan}
 \date{\today}
 
@@ -52,7 +52,8 @@ The realized profit is
     \item $Y$: the decision variable, the decision to replace the bus at the end of period $t$
 \end{itemize}
 For \textbf{unobserved variables}, we have $\nu_0,\nu_1$.
-\paragraph{State transition} The state variable $s$ evolves according to this transition function
+\paragraph{State transition} The state variable $s$ evolves according to this
+transition function
 \begin{equation*}
     s_{t+1} = s_t + \epsilon_{t+1} \quad \epsilon_{t+1} \sim N(\rho, \sigma_{\rho}^2)
 \end{equation*}
@@ -68,7 +69,7 @@ Discount factor $\beta=0.99$ is given.
 \begin{equation*}
     \begin{split}
         V(s, \nu) & = \max_{Y} \left\{ v(s,Y,\nu) + \beta \mathbb{E}[V(s', \nu')|s,Y] \right\}                       \\
-                  & = \max_{Y} \left\{ u(s,Y)+\nu_Y + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')] f(s'|s) ds' \right\} \\
+        & = \max_{Y} \left\{ u(s,Y)+\nu_Y + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')] f(s'|s) ds' \right\} \\
     \end{split}
 \end{equation*}
 
