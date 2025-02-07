@@ -39,19 +39,27 @@
 \paragraph{Utility (Profit)}
 The profit function of the Harold Zurcher is
 \begin{equation*}
-    u(s,Y) = (-RC)Y + (-\mu s)(1 - Y) = (-RC + \mu s)Y - \mu s
+    \pi(s,Y) = (-RC)Y + (-\mu s)(1 - Y) = (-RC + \mu s)Y - \mu s
 \end{equation*}
 The realized profit is
 \begin{equation*}
-    v(s,Y,\nu_0,\nu_1) = u(s,Y) + \nu_Y
+    \Pi(s,Y,\nu_0,\nu_1) = u(s,Y) + \nu_Y
 \end{equation*}
+
+Since only the difference of profit matters for the replacement decision, we
+can normalize such that
+\begin{align*}
+    u(s,Y)      & = (-RC + \mu s)Y                              \\
+    v(s,Y, \nu) & =  \Pi(s,1,\nu_0,\nu_1) -\Pi(s,0,\nu_0,\nu_1) \\
+                & = (-RC + \mu s)Y + \nu
+\end{align*}
 
 \paragraph{Variables} For \textbf{observed variables}, we have
 \begin{itemize}
     \item $s$: the state variable, the mileage at the end of period $t$
     \item $Y$: the decision variable, the decision to replace the bus at the end of period $t$
 \end{itemize}
-For \textbf{unobserved variables}, we have $\nu_0,\nu_1$.
+For \textbf{unobserved variables}, we have $\nu$.
 \paragraph{State transition} The state variable $s$ evolves according to this transition function
 \begin{equation*}
     s_{t+1} = s_t + \epsilon_{t+1} \quad \epsilon_{t+1} \sim N(\rho, \sigma_{\rho}^2)
@@ -75,12 +83,13 @@ Discount factor $\beta=0.99$ is given.
 To understand this value function, notice that at the end of each period $t$
 Harold Zurcher is essentially comparing the \textbf{continuation value} from
 replacing $Y=1$ and that from not replacing $Y=0$. We define the
-\textbf{continuation value} as $\tilde{v}(s,Y,\nu)$.
+\textbf{continuation value} as $\tilde{v}(s,Y,\nu)$. The value function is the
+maximum of them.
 \begin{align*}
-    \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu_1=  (-RC + \mu s) +\nu_1 + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,1] f(s'|s) ds' \\
-    \tilde{v}(s,0,\nu) & = \tilde{u}(s,0)+\nu_0 = \nu_0+\beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,0] f(s'|s) ds'
+    \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu=  (-RC + \mu s) +\nu + \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,1] f(s'|s) ds' \\
+    \tilde{v}(s,0,\nu) & = \tilde{u}(s,0) = \beta \int \mathbb{E}_{\nu'}[V(s', \nu')|s,0] f(s'|s) ds'
 \end{align*}
-Therefore the value function, being the maximum of the two, can be rewritten as
+Therefore the value function can be rewritten as
 \begin{equation*}
     V(s, \nu) = \max_Y\left\{ \tilde{v}(s,1,\nu), \tilde{v}(s,0,\nu) \right\}
 \end{equation*}
@@ -94,16 +103,16 @@ from T1EV, we are back to the static logit discrete choice model such that
 We follow \citet{bajari2007estimating} to approximate the continuation value
 $\tilde{v}$ by
 \begin{align*}
-    \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu_1 = x_{i1}^1\ + x_{i1}^2\beta_2 + x_{i1}^3+ \nu_1     \\
-    \tilde{v}(s,0,\nu) & = \tilde{u}(s,0) +\nu_0 = x_{i0}^1\beta_1 + x_{i0}^2\beta_2 + x_{i0}^3+\nu_0
+    \tilde{v}(s,1,\nu) & = \tilde{u}(s,1) + \nu = x_{i1}^1\beta_1 + x_{i1}^2\beta_2 + x_{i1}^3+ \nu \\
+    \tilde{v}(s,0,\nu) & = \tilde{u}(s,0)  = x_{i0}^1\beta_1 + x_{i0}^2\beta_2 + x_{i0}^3
 \end{align*}
-Where
+where
 \begin{itemize}
-    \item $x_{i}^1 = -\frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T Y_{it}$
-    \item $x_{i}^2 = -\frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T s_{it}(1-Y_{it})$
-    \item $x_{i}^3 = \frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T (\gamma-\ln(\Pr(Y_{it}|s_{it})))$: \textbf{I was tripped by this term.} It is $\ln(\Pr(Y=1|s))$ when $Y_{it}=1$ and $\ln(\Pr(Y=0|s))$ when $Y_{it}=0$.
+    \item $x_{i}^1 = \frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T Y_{it}$
+    \item $x_{i}^2 = \frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T s_{it}Y_{it}$
+    \item $x_{i}^3 = \frac{1}{K}\sum_{k=1}^K \sum_{t=1}^T (\gamma-\ln(\Pr(Y_{it}|s_{it})))$
 \end{itemize}
-Therefore, we obtain $RC=\beta_1, \mu=\beta_2$.
+Therefore, we obtain $RC=-\beta_1, \mu=\beta_2$.
 
 The optimal $\theta^*$ is the one that maximizes the likelihood function
 \begin{equation}\label{eq:likelihood}
@@ -120,7 +129,7 @@ step for simulation. Experimenting with 4 different specifications.
     \item \verb|probit3|: $\Pr(Y=1|s) = \Phi(\gamma_0 + \gamma_1 s + \gamma_2 s^2 + \gamma_3 s^3)$
     \item \verb|probitlog|: $\Pr(Y=1|s) = \Phi(\gamma_0 + \gamma_1 \ln(s))$
 \end{itemize}
-Then, we plot the estimated CCPs against a range of value for $s\in[0,40]$. Results are shown in Figure~\ref{fig:ccp_probit}. The AIC of the 4 models seem close. Because of simplicity, I chose the \verb|probit1| for later simulation. In Table~\label{tab:comparison} of appendix, I perform some robustness check under different reduced form CCPs specifications.
+Then, we plot the estimated CCPs against a range of value for $s\in[0,40]$. Results are shown in Figure~\ref{fig:ccp_probit}.
 \begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.6\textwidth]{../Figures/ccp_probit.png}
@@ -162,29 +171,25 @@ Results are shown in Table~\ref{tab:est_results}.
 
 \section{Comparison}
 
-In order to plot the CCPs estimated from ~\ref{sec:estimation} against mileage
-$s$, we first simulate for each $s\in [0,40]$ exactly as in
-~\ref{sec:simulation}. Then we use the estimated parameters $\theta^*$ to
-compute the CCPs. The results are shown in Figure~\ref{fig:ccp_dynamic}.
-\begin{figure}[!htbp]
+In order to plot the CCPs estimated from Section~\ref{sec:estimation} against
+mileage $s$, we first simulate for each $s\in [0,40]$ exactly as in
+Section~\ref{sec:simulation}. Then we use the estimated parameters to compute
+the CCPs. The results are shown in Figure~\ref{fig:ccp_dynamic}. Alternatively,
+one could take the parameters $\theta^*$ and solve the dynamic programming
+problem analytically as in \citet{rust1987optimal}. Solving for $\bar{V}(s)$
+from Equation~\ref{eq:exp_v} and then compute CCP from Equation~\ref{eq:ccp}.
+
+\begin{align}
+    \bar{V}(s) & =\gamma+\ln\left(\sum_{Y} \exp\left(u(s,Y)+\beta\int \bar{V}(s') f(s'|s) ds'\right)\right)                                        \label{eq:exp_v}                                     \\
+    \Pr(Y=1|s) & =\frac{\exp\left\{ u(s,Y=1) + \beta \sum_{s'}\bar{V}(s') \Pr(s'|s,Y)\right\}}{\sum_{Y \in \{0,1\}} \exp\left\{ u(s,Y) + \beta \sum_{s'}\bar{V}(s') \Pr(s'|s,Y)\right\}} \label{eq:ccp}
+\end{align}
+
+\begin{figure}
     \centering
     \includegraphics[width=0.6\textwidth]{../Figures/ccp_dynamic.pdf}
     \caption{Estimated dynamic CCPs following \citet{bajari2007estimating}.}
     \label{fig:ccp_dynamic}
 \end{figure}
-Alternatively, one could take the parameters $\theta^*$ and solve the dynamic
-programming problem analytically as in \citet{rust1987optimal}. Solve for
-$\bar{V}(s)$ from Equation~\ref{eq:exp_v} and then compute CCP from
-Equation~\ref{eq:ccp}.
-\begin{align}
-    \bar{V}(s) & =\gamma+\ln\left(\sum_{Y} \exp\left(u(s,Y)+\beta\int \bar{V}(s') f(s'|s) ds'\right)\right)                                        \label{eq:exp_v}                                     \\
-    \Pr(Y=1|s) & =\frac{\exp\left\{ u(s,Y=1) + \beta \sum_{s'}\bar{V}(s') \Pr(s'|s,Y)\right\}}{\sum_{Y \in \{0,1\}} \exp\left\{ u(s,Y) + \beta \sum_{s'}\bar{V}(s') \Pr(s'|s,Y)\right\}} \label{eq:ccp}
-\end{align}
-In this case, I guess the graph would not be the \textit{scatter plot} like as
-of now. Because the CCPs should be a relatively monotonic function of $s$ while
-currently it goes a bit up and down.
-
-\textit{Remark:} If the question is asking why using the full solution method (maximize likelihood from ~\ref{eq:ccp} obtained from solving for ~\ref{eq:exp_v}), is different from the this approximation method, it is because we get different $x_{i}^1,x_{i}^2,x_{i}^3$ from simulation than the true values and the approximation is subject to a lot of randomness.
 
 % \paragraph{Expected value function} We define the expected value function as
 % \begin{equation*}
@@ -208,13 +213,4 @@ currently it goes a bit up and down.
 
 \bibliography{../References/ref.bib}
 
-\appendix
-\section{Tables}
-\begin{table}[!htbp]
-    \centering
-    \input{../Tables/q6_comparison.tex}
-    \caption{Comparison of Parameter Estimates under Different Reduced Form CCPs and Simulation Rounds}
-    \label{tab:comparison}
-\end{table}
-The simulation time seems counterintuitive. Maybe this is due to parallel computing.
 \end{document}
