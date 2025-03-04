@@ -42,9 +42,10 @@ def optimize(w, oldvalue, oldx, isentry, profit, dtable, etable, multfac, two_n,
                     locwx[k] = 0  # Mark as exited
 
     ## **Entry Decision: Compute Entry Probability**
-    locwe = locwx.copy()  # Copy state for entry decision
+    locwe = locwx.copy()  # Copy state for the case of entry
     if locwe[-1] == 0:  # If the last position is empty, entry is possible
         locwe[-1] = entry_k  # Assign entry efficiency level
+
 
     ## **Compute Optimal Investment Strategy**
     for j in range(nfirms):
@@ -58,57 +59,23 @@ def optimize(w, oldvalue, oldx, isentry, profit, dtable, etable, multfac, two_n,
         # Compute expected value
         expected_val = (1 - isentry[w]) * val_stay + isentry[w] * val_up
 
-        # Compute optimal investment using a simple closed-form formula
+        # Optimal investment decision (bounded to [0,1])
         nx[j] = max(0, min(1, (expected_val - profit[w, j]) / a))
 
-        # Compute new value function with investment
+        # Update value function
         nval[j] = profit[w, j] + beta * expected_val
 
+        # Optional refinement: recheck exit decision
+        if nval[j] < phi:
+            nval[j] = phi
+            nx[j] = 0
+            locwx[j] = 0
+            for k in range(j+1, nfirms):
+                if locwx[k] <= locwx[j]:
+                    locwx[k] = 0
+
+        # Update investment policy for remaining firms
+        ox[j] = nx[j]
+
     return nx.tolist(), nval.tolist()
-
-def ccprofit(nfirms, descn, binom, D, f, ggamma):
-    """
-    Computes the profit and market share for the static Cournot competition 
-    for each firm in all states.
-
-    Args:
-        nfirms (int): Number of active firms.
-        descn (int): Number of possible industry structures.
-        binom (numpy.ndarray): Binomial coefficient matrix.
-        D (float): Cournot demand intercept.
-        f (float): Fixed cost per firm.
-        ggamma (float): Marginal cost coefficient.
-
-    Returns:
-        numpy.ndarray: Profit matrix of shape (descn, nfirms).
-    """
-    profit = np.zeros((descn, nfirms))  # Initialize profit matrix
-
-    for i in range(descn):
-        if i % 50 == 0:  # Print progress every 50 iterations
-            print(f"  Computed: {i}")
-
-        w = decode(i, nfirms, binom)  # Decode state i into efficiency levels
-        theta = ggamma * np.exp(-(np.array(w) - 4))  # Compute marginal cost
-
-        # Solve for Cournot equilibrium: Reduce number of firms until all produce positive quantity
-        n = nfirms
-        p = (D + np.sum(theta[:n])) / (n + 1)  # Equilibrium price
-
-        while not ((p - theta[n - 1] >= 0) or (n == 1)):  # Reduce n if price makes last firm unprofitable
-            n -= 1
-            p = (D + np.sum(theta[:n])) / (n + 1)
-
-        q = np.zeros(nfirms)  # Initialize output quantities
-        if p - theta[n - 1] > 0:  # Ensure positive quantity production
-            q[:n] = p - theta[:n]
-
-        quan = q  # Equilibrium quantity
-
-        pstar = D - np.sum(quan)  # Equilibrium price
-        profstar = (pstar > theta) * (pstar - theta) * quan - f  # Compute profits
-
-        profit[i, :] = profstar  # Store computed profits
-
-    return profit
 

@@ -46,6 +46,52 @@ def static_profit(c):
 
     c["PROFIT_DONE"] = 1  # Mark profit computation as done
 
+def ccprofit(nfirms, descn, binom, D, f, ggamma):
+    """
+    Computes the profit and market share for the static Cournot competition 
+    for each firm in all states.
+
+    Args:
+        nfirms (int): Number of active firms.
+        descn (int): Number of possible industry structures.
+        binom (numpy.ndarray): Binomial coefficient matrix.
+        D (float): Cournot demand intercept.
+        f (float): Fixed cost per firm.
+        ggamma (float): Marginal cost coefficient.
+
+    Returns:
+        numpy.ndarray: Profit matrix of shape (descn, nfirms).
+    """
+    profit = np.zeros((descn, nfirms))  # Initialize profit matrix
+
+    for i in range(descn):
+        if i % 50 == 0:  # Print progress every 50 iterations
+            print(f"  Computed: {i}")
+
+        w = decode(i, nfirms, binom)  # Decode state i into efficiency levels
+        theta = ggamma * np.exp(-(np.array(w) - 4))  # Compute marginal cost
+
+        # Solve for Cournot equilibrium: Reduce number of firms until all produce positive quantity
+        n = nfirms
+        p = (D + np.sum(theta[:n])) / (n + 1)  # Equilibrium price
+
+        while not ((p - theta[n - 1] >= 0) or (n == 1)):  # Reduce n if price makes last firm unprofitable
+            n -= 1
+            p = (D + np.sum(theta[:n])) / (n + 1)
+
+        q = np.zeros(nfirms)  # Initialize output quantities
+        if p - theta[n - 1] > 0:  # Ensure positive quantity production
+            q[:n] = p - theta[:n]
+
+        quan = q  # Equilibrium quantity
+
+        pstar = D - np.sum(quan)  # Equilibrium price
+        profstar = (pstar > theta) * (pstar - theta) * quan - f  # Compute profits
+
+        profit[i, :] = profstar  # Store computed profits
+
+    return profit
+
 def decode(code, nfirms, binom):
     """
     Decodes an integer state code into a weakly descending n-tuple.
@@ -152,17 +198,18 @@ def calcval(place, w, x, k, oldvalue, etable, multfac, two_n, kmax, nfirms, mask
     z1 = np.zeros(nfirms, dtype=int)  # Lower bound (0)
     z2 = np.full(nfirms, kmax, dtype=int)  # Upper bound (kmax)
 
-    # Adjust "mask" based on firm's position
+   # Adjust "mask" based on firm's position
     if nfirms > 1:
+        zeros_row = np.zeros((1, two_n))
         if place == 1:
-            locmask = np.vstack([np.zeros((1, two_n)), mask])
+            locmask = np.vstack([zeros_row, mask])
         elif place == nfirms:
-            locmask = np.vstack([mask, np.zeros((1, two_n))])
+            locmask = np.vstack([mask, zeros_row])
         else:
-            locmask = np.vstack([mask[:place - 1], np.zeros((1, two_n)), mask[place - 1:]])
+            locmask = np.vstack([mask[:place - 1], zeros_row, mask[place - 1:]])
     else:
         locmask = np.zeros((1, 1), dtype=int)
-
+    
     # Modify investment and state
     x[place - 1] = 0  # Own investment is set to zero
     w[place - 1] = k  # Own efficiency level is updated
@@ -274,55 +321,7 @@ def optimize(w, oldvalue, oldx, isentry, profit, dtable, etable, multfac, two_n,
 
     return nx.tolist(), nval.tolist()
 
-def ccprofit(nfirms, descn, binom, D, f, ggamma):
-    """
-    Computes the profit and market share for the static Cournot competition 
-    for each firm in all states.
 
-    Args:
-        nfirms (int): Number of active firms.
-        descn (int): Number of possible industry structures.
-        binom (numpy.ndarray): Binomial coefficient matrix.
-        D (float): Cournot demand intercept.
-        f (float): Fixed cost per firm.
-        ggamma (float): Marginal cost coefficient.
-
-    Returns:
-        numpy.ndarray: Profit matrix of shape (descn, nfirms).
-    """
-    profit = np.zeros((descn, nfirms))  # Initialize profit matrix
-
-    for i in range(descn):
-        if i % 50 == 0:  # Print progress every 50 iterations
-            print(f"  Computed: {i}")
-
-        w = decode(i, nfirms, binom)  # Decode state i into efficiency levels
-        theta = ggamma * np.exp(-(np.array(w) - 4))  # Compute marginal cost
-
-        # Solve for Cournot equilibrium: Reduce number of firms until all produce positive quantity
-        n = nfirms
-        p = (D + np.sum(theta[:n])) / (n + 1)  # Equilibrium price
-
-        while not ((p - theta[n - 1] >= 0) or (n == 1)):  # Reduce n if price makes last firm unprofitable
-            n -= 1
-            p = (D + np.sum(theta[:n])) / (n + 1)
-
-        q = np.zeros(nfirms)  # Initialize output quantities
-        if p - theta[n - 1] > 0:  # Ensure positive quantity production
-            q[:n] = p - theta[:n]
-
-        quan = q  # Equilibrium quantity
-
-        pstar = D - np.sum(quan)  # Equilibrium price
-        profstar = (pstar > theta) * (pstar - theta) * quan - f  # Compute profits
-
-        profit[i, :] = profstar  # Store computed profits
-
-    return profit
-
-
-import numpy as np
-from qdecode import qdecode
 
 def contract(oldvalue, oldx, profit, dtable, etable, multfac, wmax, two_n, kmax, nfirms, mask, x_entryl, x_entryh, phi, entry_k, beta, delta, a):
     """
@@ -521,48 +520,3 @@ def initialize(dtable, nfirms, wmax, binom, newvalue, newx):
 
     return oldvalue, oldx
 
-import numpy as np
-
-def ds_ma(c, out_file):
-    """
-    Simulates the dynamic oligopoly game for a specified number of periods 
-    and computes summary statistics.
-
-    Args:
-        c (dict): Model parameters containing:
-            - DS_WSTART (list or np.ndarray): Initial state for simulation.
-            - DS_NSIMX (int): Number of simulation periods.
-        out_file (str): Output file name for saving results.
-    """
-    wstart = np.array(c["DS_WSTART"])  # Initial state for simulation
-    numtimes = c["DS_NSIMX"]  # Number of simulation periods
-
-    # Initialize state tracking
-    state_history = np.zeros((numtimes, len(wstart)), dtype=int)
-    firms_count = np.zeros(numtimes, dtype=int)  # Track active firms count
-    total_investment = np.zeros(numtimes, dtype=float)  # Track total investment
-
-    # Set initial state
-    state = wstart.copy()
-
-    for t in range(numtimes):
-        state_history[t] = state  # Record current state
-        firms_count[t] = np.sum(state > 0)  # Count active firms
-
-        # Compute investment decision using optimize function
-        encoded_state = qencode(state.tolist(), etable, multfac)
-        investment, _ = optimize(encoded_state, oldvalue, oldx, isentry, profit, dtable, etable, multfac, two_n, kmax, nfirms, mask, phi, entry_k, beta, delta, a)
-
-        total_investment[t] = np.sum(investment)  # Track total investment
-
-        # Update state based on investment and exogenous shocks
-        state = update_state(state, investment, c)
-
-    # Compute statistics
-    avg_firms = np.mean(firms_count)
-    avg_investment = np.mean(total_investment)
-
-    # Save results
-    np.savez(out_file, avg_firms=avg_firms, avg_investment=avg_investment, state_history=state_history)
-
-    print(f"Simulation completed. Results saved in {out_file}")
