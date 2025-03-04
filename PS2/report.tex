@@ -58,7 +58,7 @@ In an active market with multiple incumbent firms and a set of potential entrant
 \end{itemize} 
 The model can be classified as multiagent dynamic problem with infinite horizon. While the name is mouthful, the idea is essentially that each agent is solving its own optimization problem in the face of others, while taking into account the future. 
 
-\paragraph{Rules of Game} The games repeats for inifite number of periods. Inside each period, the game is played in the following way.
+\subsubsection{Rules of Game} The games repeats for inifite number of periods. Inside each period, the game is played in the following way.
 \begin{enumerate}
     \item Stage 1: Each firm $i$ observes the industry state $\omega$ and its own productivity $\omega^i$.\footnote{Let's say there are firm A, B, C with productivity 1, 2, 3. From the perspective of $A$, this is equivalent to another state which is (1,3,2) because the industry profit is determined sole by the industry state and my profit is determined by how we split the profit, which is solely determined by my position in the industry.}
     \item Stage 2: (simultaneous decision)
@@ -70,49 +70,38 @@ The model can be classified as multiagent dynamic problem with infinite horizon.
     \item Stage 4: As if the market is closed for a short period of time, and now let's update the market conditions.
     \begin{itemize}
         \item We kick out those incumbents who have decided to exit and welcome those potential entrants who have decided to enter. We update the number of firms $N'$. 
-        \item We let the investment to take effect on the productivity. We update the productivity $\omega'$. This transition of productivity follows the folloing equation $$\omega'=\omega+\tau_i-\nu.$$ If we specify that $\Pr(\tau_i=1)=\frac{ax}{1+ax}$ and $\Pr(\nu=1)=\delta$ then 
-        \begin{equation*}
-            \omega'=\begin{cases}
-                \omega+1 & \text{with probability } \frac{ax}{1+ax}(1-\delta) \\
-                \omega-1 & \text{with probability } \frac{1}{1+ax}\delta\\
-                \omega & \text{with probability } \frac{ax}{1+ax}\delta+\frac{1}{1+ax}(1-\delta)
-            \end{cases}
-        \end{equation*}
+        \item We let the investment to take effect on the productivity. We update the productivity $\omega'$. This transition of productivity follows the folloing equation $$\omega'=\omega+\tau_i-\nu.$$ 
+        % If we specify that $\Pr(\tau_i=1)=\frac{ax}{1+ax}$ and $\Pr(\nu=1)=\delta$ then 
+        % \begin{equation*}
+        %     \omega'=\begin{cases}
+        %         \omega+1 & \text{with probability } \frac{ax}{1+ax}(1-\delta) \\
+        %         \omega-1 & \text{with probability } \frac{1}{1+ax}\delta\\
+        %         \omega & \text{with probability } \frac{ax}{1+ax}\delta+\frac{1}{1+ax}(1-\delta)
+        %     \end{cases}
+        % \end{equation*}
     \end{itemize}
 \end{enumerate}
 
-Now we are ready to introduce the framework similar to single-agent dynamic problem as in \citet{rust1987optimal}.
-\paragraph{Utility (Profit)}
+Now we are ready to introduce the framework similar to single-agent dynamic problem as in \citet{rust1987optimal}. 
+\subsubsection{Profit Function}
 The profit function of one firm is
 \begin{equation*}
     \Pi_j(\omega)(\omega)
 \end{equation*}
+We assume a cournot competition, the inverse demand function is 
+$p = D-\sum_{i=1}^N q_i$
+The individual firm's profit function is $$ (p-\theta_i)q_i-f$$. Thus the supply function is $q_i=p-\theta_i$. The supply demand gives equilibrium price $p^*=\frac{D+\sum_{i=1}^N \theta_i}{N+1}$, equilibrium price is $q_i^*=p^*-\theta_i$.
 
-% \paragraph{Variables} For \textbf{observed variables}, we have
-% \begin{itemize}
-%     \item $s$: the state variable, the mileage at the end of period $t$
-%     \item $Y$: the decision variable, the decision to replace the bus at the end of period $t$
-% \end{itemize}
-% For \textbf{unobserved variables}, we have $\nu_0,\nu_1$.
+\begin{equation*}
+    \Pi_j(\omega)=(p^*-\theta_j)q_j^*-f
+\end{equation*}
 
-% \paragraph{State transition} The state variable $\omega$ evolves according to this
-% transition function
-% \begin{equation*}
-%     s_{t+1} = s_t + \epsilon_{t+1} \quad \epsilon_{t+1} \sim N(\rho, \sigma_{\rho}^2)
-% \end{equation*}
 
-% \paragraph{Parameters} The profit function parameters:
-% \begin{itemize}
-%     \item $\mu$: the cost of maintaining the bus
-%     \item $RC$: the replacement cost of the bus
-% \end{itemize}
-% The state transition parameters: $\rho$ and $\sigma_{\rho}^2$.
-% Discount factor $\beta=0.99$ is given.
-
-\paragraph{Incumbent Value function} The value function is
+\subsubsection{Incumbent Firm}
+The value function is
 \begin{equation*}
     \begin{split}
-        V((\omega_j, \omega_{-j}),\phi) & = \max\set{\phi,\max_{x_i}-x_i+\beta\E_{\omega',j',\phi'}[V(\omega_j',\omega_{-j}',\phi')|(\omega_j, \omega_{-j}),x_j]} + \Pi_j(\omega)\\
+        V((\omega_j, \omega_{-j}),\phi) & = \max\set{\phi,\max_{x_i}-x_i+\beta\E_{\omega_j',\omega_{-j}',\phi'}[V(\omega_j',\omega_{-j}',\phi')|(\omega_j, \omega_{-j}),x_j]} + \Pi_j(\omega)\\
     \end{split}
 \end{equation*}
  This value function looks quite different from that of \citet{rust1987optimal}. It incorporates two decisions. The first $\max$ refers to the choice to exit or stay. The second $\max$ refers to the choice of investment if staying.
@@ -126,111 +115,161 @@ The profit function of one firm is
 \end{enumerate}
 
 Putting together we get 
-\begin{equation*}
-    \E_{\omega',j',\phi'}[V(\omega_j',\omega_{-j}',\phi')|(\omega_j, \omega_{-j}),x_j]=\int_\nu \int_{\tau_j} \int V(\omega_j+\tau_j-\nu, \omega_{-j}')dF(\omega_{-j}'|\omega_j,\omega_{-j},\nu)dF(\tau_j|x_j)dF(\nu).
-\end{equation*}
-
-
-Since both $\tau_j$ and $\nu$ are binary, and $\omega_{-j}$ discrete, we can simplify the above equation to
-\begin{equation*}
-    \begin{split}
-        &\int_{\tau_j}\Pr(\nu=1)\sum_{\omega_{-j}'}f(\omega_{-j}|\omega_j,\omega_{-j},\nu=1)
-        V(\omega_j+\tau_j-1, \omega_{-j})+\Pr(\nu=0)\sum_{\omega_{-j}}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=0)
-        V(\omega_j+\tau_j, \omega_{-j}) \, dF(\tau_j|x_j)\\
-        &=\Pr(\tau_j=1)\Pr(\nu=1)\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j, \omega_{-j}')\\
-        &+\Pr(\tau_j=1)\Pr(\nu=0)\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=0)V(\omega_j+1, \omega_{-j}')\\
-        &+\Pr(\tau_j=0)\Pr(\nu=1)\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j-1, \omega_{-j}')\\
-        &+\Pr(\tau_j=0)\Pr(\nu=0)\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=0)V(\omega_j, \omega_{-j}')\\
-    \end{split}
-\end{equation*}
-Reorganizing the terms, we get
-\begin{equation}\label{eq:calcval}
-    \begin{split}
-        &\delta \left[p(x_j)\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j, \omega_{-j}')+(1-p(x_j))\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j-1, \omega_{-j}')\right]\\
-        &+(1-\delta) \left[p(x_j)\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=0)V(\omega_j+1, \omega_{-j}')+(1-p(x_j))\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=0)V(\omega_j, \omega_{-j}')\right]\\
-    \end{split}
+\begin{equation}\label{eq:continuation_value}
+    \E[V(\omega_j',\omega_{-j}',\phi')|(\omega_j, \omega_{-j}),x_j]=\int_{\tau_j} \int_\nu \int_{\omega_{-j}'} V(\omega_j+\tau_j-\nu, \omega_{-j}')dF(\omega_{-j}'|\omega_j,\omega_{-j},\nu)dF(\nu)dF(\tau_j|x_j).
 \end{equation}
-which is how we compute things in the code. (finally understand the logic behind the code).
+
+In fact $\omega_j'$ can be decomposed into two variables $\tau_j$ and $\nu$.  Now there are 4 random variables we want to integrate over, conditioning on $\omega_j, \omega_{-j}, x_j$.
+\begin{enumerate}
+    \item $\phi'$: next period scrap value (in the problem set, this is fixed)
+    \item $\omega_{-j}'$: next period industry state for all other firms, this depend on the current industry state for all other firms $\omega_{-j}$, and the current investment decision of all other firms $x_{-j}$, and the aggregate shock $\nu$.
+    \item $\nu$: aggregate shock
+    \item $\tau_j$: next period individual shock for firm $j$, this depend on the current investment decision of firm $j$ $x_j$.
+\end{enumerate}
+
+Then let's do it one by one (ignoring the $\phi'$ part) in the order stated above .This is equivalent to equation \ref{eq:continuation_value} but use the fact that the random variables are discrete/binary.
+We first fix the individual shock $\tau_j$. We write the first two integrals as
+\begin{equation*}
+    \begin{split}
+        W(\tau_j,\omega_j,\omega_{-j})& =\Pr(\nu=1)\sum_{\omega_{-j}'}\Pr(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j+\tau_j-1, \omega_{-j}')\\
+        & +\Pr(\nu=0)\sum_{\omega_{-j}'}\Pr(\omega_{-j}'|\omega_j,\omega_{-j},\nu=0)V(\omega_j+\tau_j, \omega_{-j}').
+    \end{split}
+\end{equation*}
+Then the full integral can be written as 
+\begin{equation}\label{eq:continuation_value_m}
+    \E[V(\omega_j',\omega_{-j}',\phi')|(\omega_j, \omega_{-j}),x_j]=\Pr(\tau_j=1|x_j)W(1, \omega_j,\omega_{-j})+ \Pr(\tau_j=0|x_j)W(0, \omega_j,\omega_{-j}).
+\end{equation}
+
+\paragraph{Incumbent investment decision}This is a function of $\omega_j, \omega_{-j}, x_j$. Let us denote this function by $\tilde{u}(\omega_j, \omega_{-j}, x_j)$.
+Then the optimal investment decision is to solve
+$$\max_{x_j} -x_j+\beta \tilde{u}(\omega_j, \omega_{-j}, x_j).$$
+This admits a closed form solution since 
+$$ -x_j + \beta\bra{\frac{ax_j}{1+ax_j}W(1, \omega_j,\omega_{-j})+\frac{1}{1+ax_j}W(0, \omega_j,\omega_{-j})}$$
+is a function of $x_j$.
+Taking derivative with respect to $x_j$ gives
+
+$$(1+ax)^2=a(W_1-W_0)\beta.$$
+
+Note that here we have not consider any potential entrant entering the market, so this not exactly the optimal investment decision. We will come back to this later.
+
 
 \textbf{Now let's look at the first $\max$.}
-Basically, the firm will choose to stay if 
+\paragraph{Incumbent staying decision} Basically, the firm will choose to stay if 
 $$\phi<\max_{x_i}-x_i+\beta\E_{\omega',j',\phi'}[V(\omega_j',\omega_{-j}',\phi')|(\omega_j, \omega_{-j}),x_j].$$
 
-We denote the probability of staying by $r_j = F_\phi(\max_{x_i}-x_i+\beta\E_{\omega',j',\phi'}[V(\omega_j',\omega_{-j}',\phi')|(\omega_j, \omega_{-j}),x_j])$.
+ We denote the probability of staying by $r_j = F_\phi(\max_{x_i}-x_i+\beta\E_{\omega',j',\phi'}[V(\omega_j',\omega_{-j}',\phi')|(\omega_j, \omega_{-j}),x_j])$.\footnote{In the problem set, $\phi$ is not a random variable. So the probability is 0 or 1.}
 
 
-\paragraph{Potential Entrant Value function} The value function is
+\subsubsection{Potential Entrant} The value function is
 \begin{equation*}
     V(\omega, \phi^e) = \max\set{0,\max_{x_i}\set{-\phi^e-x_i+\beta\E{V(\omega_i',\omega_{-i}',\phi')|(\omega, x_i)}}}
 \end{equation*}
 Similarly, we denote the probability of entering by $r^e=F_{\phi^e}(-x_i+\beta\E{V(\omega_i',\omega_{-i}',\phi')|(\omega, x_i)})$.
 
 \subsection{Computation}
-I defer the discussion of equilibrium existence (which will be discussed anyway when I submit the referee report of \citet{doraszelski2010computable}) and talk about computation first.
-
-\paragraph{Profit functions} Interprete \verb|static_profit| and \verb|ccprofit|.
-For each \(n = 1, \dots, \bar{n}\):
+First, given a set of parameters we can compute the value function by numerically solve for the value function and policy function.
 \begin{enumerate}
-    \item Loop over all industry structures:
+    \item start with initial values of $V(\omega_j, \omega_{-j})$ and $x_j$ for all $j$. and one entry probability $r^e$.
+    \item for one iteration, do the following:
+    for each $\omega_j, \omega_{-j}$:
     \begin{enumerate}
-        \item Decode the structure into:
-        \[
-        (w_1, w_2, \dots, w_n)
-        \]
-        \item For this structure, solve:
-        \begin{enumerate}
-            \item Compute marginal costs for each firm:
-            \[
-            \theta_i = \gamma \exp(-(w_i - 4))
-            \]
-            \item Solve for static Cournot equilibrium:
-            \begin{enumerate}
-                \item Compute equilibrium price:
-                \[
-                p = \frac{D + \sum_{i=1}^n \theta_i}{n+1}
-                \]
-                \item Compute quantities for each firm (if feasible):
-                \[
-                q_i = p - \theta_i
-                \]
-                \item Compute profits for each firm:
-                \[
-                \pi_i = (p - \theta_i)q_i - f
-                \]
-            \end{enumerate}
-        \end{enumerate}
-        \item Save computed profits into the profit table.
+        \item \verb|calcval|: compute the $W(1, \omega_j,\omega_{-j})$ and $W(0, \omega_j,\omega_{-j})$.
+        \item  \verb|optimize|: First, compute the continuation value function $\tilde{u}(\omega_j, \omega_{-j}, x_j)$ from $\tilde{u}(\omega_j, \omega_{-j}, x_j)= p(x_j)W_1+(1-p(x_j))W_0$. When computing the real continuation value function, there are two scnarios: one with entrant entering and one without. This will change the next period industry state $\omega_j'$. Therefore, we need to consider both of them.
+        \begin{equation*}
+            \begin{split}
+                \tilde{v}(\omega_j, \omega_{-j}, x_j)&=\Pr(\text{enters})\tilde{u}(\omega_j, \omega_{-j}, \omega^e, x_j)
+                +\Pr(\text{not enters})\tilde{u}(\omega_j, \omega_{-j}, x_j)\\
+                & = r^e\bra{p(x_j)W_1^e+(1-p(x_j))W_0^e}+(1-r^e)\bra{p(x_j)W_1+(1-p(x_j))W_0}.
+            \end{split}
+        \end{equation*}
+        Second, solve for the optimal investment decision $x_j$ by maximizing over $x_j$ the following
+        \begin{equation*}
+            -x_j + \beta\bra{p(x_j)(r^eW^e_1+(1-r^e)W_1)+(1-p(x_j))(r^eW_0^e+(1-r^e)W_0)}.
+        \end{equation*}
+        having an \textbf{optimal investment decision} $x_j$, we can \textbf{update the value function}, which is to take maximum over 
+        \begin{equation*}
+            \max\set{\phi, -x_j^*+\beta\tilde{v}(\omega_j, \omega_{-j}, x_j^*)}+\Pi_j(\omega).
+        \end{equation*}
+        then \textbf{update again the investment decision} $x_j^*$ to $0$ if $\Phi$ is larger.
+        \item \verb|contract|: calculate the $r^e$ and feed the $r^e$ back to the \verb|optimize| step so that we can have the updated value function and investment decision for the next iteration.
     \end{enumerate}
+    \item we will stop when $\norm{V^{l}-V^{l-1}}<\epsilon$ or $\norm{x^{l}-x^{l-1}}<\epsilon$.
 \end{enumerate}
 
-\paragraph{Continuation value function} Interprete \verb|calcval|.
-Refer to equation~\ref{calcval}. Consider the terms inside the bracket of $\delta$, this is the case when the aggregate shock is 1, then all firms would only have two possibility, either staying at the same level (probability $p(x_j)$) or going down by 1 (probability $1-p(x_j)$). 
-
-Fix $\nu=1$, for each \(m = 1, \dots, 2^{n-1}\):
+Second, once we have a set of value function and policy function, we can simulate the industry dynamics.
+given an initial industry state $\omega$, for $t=1,2,\ldots,T$:
 \begin{enumerate}
-    \item Compute the probability of all other firms transition from $\omega_k$ to $\omega_k'$ given investment $x_k$, that is $f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)$ in equation~\ref{calcval}.
-$$f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)=\Pi_{k\neq j}\Pr(\omega_k'|\omega_k,x_k,\nu=1)$$
-Look at firm $k$, we if $k$'s efficiency stays the same, that is $m_k=1$, then we have 
-$$\Pr(\omega_k'|\omega_k,x_k,\nu=1)=\frac{ax_k}{1+ax_k}$$
-Similarly for the case when efficienty goes down $m_k=0$, putting both cases together we have
-$$\Pr(\omega_k'|\omega_k,x_k,\nu=1)=m_k\frac{ax_k}{1+ax_k}+(1-m_k)(1-\frac{ax_k}{1+ax_k})$$
-\item Now that we have computed each $f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)$, we can compute $\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j, \omega_{-j}')$ and $\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j-1, \omega_{-j}')$. 
-\begin{enumerate}
-    \item $V(\omega_j, \omega_{-j}')$: For each $(\omega_j, \omega_{-j}')$ we need to sort the $\omega$ vector and encode it into a code of the state plus the index of firm $j$'s position. Then we look up the old value table to get $V(\omega_j, \omega_{-j}')$. Sum the product of $f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)$ and $V(\omega_j, \omega_{-j}')$.
-    \item $V(\omega_j-1, \omega_{-j}')$: For each $(\omega_j-1, \omega_{-j}')$ we do exactly the same thing. Look up the old value table to get $V(\omega_j-1, \omega_{-j}')$. Sum the product.
+    \item solve whether firm wants to stay or exit, if stay, the optimal investment. if there is potential entrant, solve whether to enter. 
+    \item given the stay/enter decisions, simulate the individual and aggregate shocks, update the industry state.
 \end{enumerate}
-\item we get the value inside the bracket of $\delta$.
-\end{enumerate}
+We can keep track of the realization at each period, that is the industry state, the entry/exit decision, the investment decision, the profit. Each statistics is a vector of size $T$. We then can compute the mean of the vectors to get the average industry state,..., profit.
 
-Fix $\nu=0$, same as above. we get the term inside the bracket of $1-\delta$. 
+% \subsection{Computation}
+% I defer the discussion of equilibrium existence (which will be discussed anyway when I submit the referee report of \citet{doraszelski2010computable}) and talk about computation first.
 
-Adding them together, we get the continuation value function for a given investment vector $x$...\footnote{how hard...}
+% \paragraph{Profit functions} Interprete \verb|static_profit| and \verb|ccprofit|.
+% For each \(n = 1, \dots, \bar{n}\):
+% \begin{enumerate}
+%     \item Loop over all industry structures:
+%     \begin{enumerate}
+%         \item Decode the structure into:
+%         \[
+%         (w_1, w_2, \dots, w_n)
+%         \]
+%         \item For this structure, solve:
+%         \begin{enumerate}
+%             \item Compute marginal costs for each firm:
+%             \[
+%             \theta_i = \gamma \exp(-(w_i - 4))
+%             \]
+%             \item Solve for static Cournot equilibrium:
+%             \begin{enumerate}
+%                 \item Compute equilibrium price:
+%                 \[
+%                 p = \frac{D + \sum_{i=1}^n \theta_i}{n+1}
+%                 \]
+%                 \item Compute quantities for each firm (if feasible):
+%                 \[
+%                 q_i = p - \theta_i
+%                 \]
+%                 \item Compute profits for each firm:
+%                 \[
+%                 \pi_i = (p - \theta_i)q_i - f
+%                 \]
+%             \end{enumerate}
+%         \end{enumerate}
+%         \item Save computed profits into the profit table.
+%     \end{enumerate}
+% \end{enumerate}
 
-\paragraph{Optimization} Interprete \verb|optimize|.
+% \paragraph{Continuation value function} Interprete \verb|calcval|.
+% Refer to equation~\ref{calcval}. This is to code the equation~\ref{eq:continuation_value_m}.
 
-\paragraph{Equilibrium} Interprete \verb|contract| and \verb|eql_ma|.
+% Fix $\nu=1$, for each \(m = 1, \dots, 2^{n-1}\):
+% \begin{enumerate}
+%     \item Compute the probability of all other firms transition from $\omega_k$ to $\omega_k'$ given investment $x_k$, that is $f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)$ in equation~\ref{calcval}.
+% $$f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)=\Pi_{k\neq j}\Pr(\omega_k'|\omega_k,x_k,\nu=1)$$
+% Look at firm $k$, we if $k$'s efficiency stays the same, that is $m_k=1$, then we have 
+% $$\Pr(\omega_k'|\omega_k,x_k,\nu=1)=\frac{ax_k}{1+ax_k}$$
+% Similarly for the case when efficienty goes down $m_k=0$, putting both cases together we have
+% $$\Pr(\omega_k'|\omega_k,x_k,\nu=1)=m_k\frac{ax_k}{1+ax_k}+(1-m_k)(1-\frac{ax_k}{1+ax_k})$$
+% \item Now that we have computed each $f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)$, we can compute $\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j, \omega_{-j}')$ and $\sum_{\omega_{-j}'}f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)V(\omega_j-1, \omega_{-j}')$. 
+% \begin{enumerate}
+%     \item $V(\omega_j, \omega_{-j}')$: For each $(\omega_j, \omega_{-j}')$ we need to sort the $\omega$ vector and encode it into a code of the state plus the index of firm $j$'s position. Then we look up the old value table to get $V(\omega_j, \omega_{-j}')$. Sum the product of $f(\omega_{-j}'|\omega_j,\omega_{-j},\nu=1)$ and $V(\omega_j, \omega_{-j}')$.
+%     \item $V(\omega_j-1, \omega_{-j}')$: For each $(\omega_j-1, \omega_{-j}')$ we do exactly the same thing. Look up the old value table to get $V(\omega_j-1, \omega_{-j}')$. Sum the product.
+% \end{enumerate}
+% \item we get the value inside the bracket of $\delta$.
+% \end{enumerate}
 
-\paragraph{Simulation} Interprete \verb|ds_ma|.
+% Fix $\nu=0$, same as above. we get the term inside the bracket of $1-\delta$. 
+
+% Adding them together, we get the continuation value function for a given investment vector $x$...\footnote{how hard...}
+
+% \paragraph{Optimization} Interprete \verb|optimize|.
+
+% \paragraph{Equilibrium} Interprete \verb|contract| and \verb|eql_ma|.
+
+% \paragraph{Simulation} Interprete \verb|ds_ma|.
 
 \section{Tasks}
 
