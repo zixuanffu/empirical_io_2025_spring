@@ -1,0 +1,108 @@
+\documentclass[12pt]{article}[margin=1in]
+\usepackage{setspace}
+\linespread{1}
+\usepackage{fullpage,graphicx,psfrag,amsmath,amsfonts,verbatim}
+\usepackage[small,bf]{caption}
+\usepackage{amsthm}
+% \usepackage[hidelinks]{hyperref}
+\usepackage{hyperref}
+\usepackage{bbm} % for the indicator function to look good
+\usepackage{color}
+\usepackage{mathtools}
+\usepackage{fancyhdr} % for the header
+\usepackage{booktabs} % for regression table display (toprule, midrule, bottomrule)
+\usepackage{adjustbox} % for regression table display
+\usepackage{threeparttable} % to use table notes
+\usepackage{natbib} % for bibliography
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\input newcommand.tex
+\bibliographystyle{apalike}
+% \setlength{\parindent}{0pt} % remove the automatic indentation
+
+\title{\textbf{Computable Markov-perfect industry dynamics}}
+\author{Fu Zixuan}
+\date{\today}
+
+\begin{document}
+\maketitle
+% \thispagestyle{empty}
+% \begin{abstract}
+
+% \end{abstract}
+
+% \newpage
+% \thispagestyle{empty}
+% \tableofcontents
+% \newpage
+
+% \setcounter{page}{1}
+
+
+
+\paragraph{Summary} This paper \citep{doraszelski2010computable} establishes equilibrium existence results for the multi-agent dynamic problem originally framed by \citet{ericson1995markov}. In \citet{pakes1994computing}, the authors implicitly assume that equilibrium strategies are pure. Then they proceed to compute the optimal pure strategies and the resulting industry evolution given a set of model parameters. However, in practice, the algorithm of solving for equilibrium objects in their setting may fail to converge. To address this, \citet{pakes1994computing} introduces random entry costs for the potential entrants. The random costs create incomplete information in the setting.  Theoretical results in static games by \cite{harsanyi1973games} shows that if a complete information game admits only a mixed strategy equilibrium, transforming it into a game with incomplete information can purify the equilibrium to yield a pure strategy.  Simply put, in a two-player setting, each player's strategy is a function $s(x)$ of their private cost draw $x$. Since a player knows their own $x$, they play a pure strategy; however, they view their opponent as playing a mixed strategy over the set of possible strategies $\set{s(x)}$, with probability $\Pr(s(x))=f(x)$. 
+
+Building on this, \citet{doraszelski2010computable} extends the framework of \citet{pakes1994computing} by incorporating both random entry costs and random scrap values. Each player observes their own realized entry cost and scrap value but remains uncertain about those of their competitors. The authors extends the purification argument above to the dynamic game in question. If a model satisfies the set of assumptions outlined in the paper, the existence of a pure strategy equilibrium is guaranteed, and any failure to find such an equilibrium is purely a computational issue. Thus, they provide theoretical foundation for the equilibrium computation techniques already in use.
+
+\paragraph{Definition of symmtery} What I like most about the paper is the second element of the existence results--the symmetry of the equilbrium objects (policy functions, value functions, local income functions). This property is stated buy not discussed in details in the original \citet{ericson1995markov} paper. This paper explains the notion in length from two perspectives. 
+\begin{enumerate}
+    \item The reduction in the size $\abs{S}$ of industy state space $\omega$ and the size $\abs{S^\circ}$of firm state space $(\omega_j,\omega_{-j})$ \footnote{Industry state space is from a market designer perspective where it considers the market as whole. While firm state space is from the firm's perspective where it considers its own level and its level relative to the rest.}
+    \item The reduction in the number of functions (policy function, value function etc.)
+\end{enumerate}
+To the extreme contrary of the current symmetric property, let us consider the case where the number of efficiency level to be $M+1$ including inactivity, and the maximum number of firms to be $N$. 
+\begin{enumerate}
+    \item state space: $\abs{S}=\abs{S^\circ} = N^{M+1}$
+    \item value function: for each firm, we have a distinct value function $V_n$ defined on the firm state space $(\omega_j,\omega_{-j})$. Thus, there are $\abs{S^\circ}$ points to evaluate for each function, which gives a total of $N\times N^{M+1}$ number of $V(\cdot)$ to solve for in the equilibrium.
+\end{enumerate}
+
+The notion of symmetry implies the two following: 
+\begin{enumerate}
+    \item For a given firm $j$, if its two rivals $j-1$ and $j+1$ switch their efficiency level, firm $j$'s have the exact same value and decision as before the switch. In this case, the size $\abs{S^\circ} = M+1 \times \binom{(M+1+N-1)-1}{M}$.\footnote{Firm $j$'s efficiency $\omega_j$ can take on $M+1$ values, the rest $\omega_{-j}$ has a size equivalent to the number of ways to arrange $M$ bars and $N-1$ stars.}
+    \item For any two firms $i$ and $j$, if they have the same efficiency level and the same rival state, firm $i$ and $j$ should have the exact same value and decision. This implies all firms share the common value fucntion. In this case, we have a total of $\abs{S^\circ}$ number of $V(\cdot)$ to sovle for in the equilibrium.
+\end{enumerate}
+The above should imply that given an industry state $\omega$ and any permutation of it (reassign the level to the firms), the industry will exhibit the exact same dynamics. The industry state space has size $\abs{S}=\binom{M+N}{M}$
+A minor comment is that in the paper, the authors define the matrix for value function  size $\abs{S} \times N = \binom{M+N}{M} \times N > \abs{S^\circ} = M+1 \times \binom{M+N-1}{M}$. I am not sure whether difference in computation speed is noticable, it might be interesting to experiment with the alternative way.
+
+\paragraph{Existence results} The first main proposition shows the existence of a possibly asymmetric pure strategy equilibrium, the argument of which is well established and easy to follow. What I find more interesting is the second main proposition that shows the existence of a symmetric pure strategy equilibirum. It does it by first constructing a symmetric strategy profile (candidate), then proving that the  symmetric strategy profile (candidate) is indeed an equilibrium. 
+
+\begin{enumerate}
+    \item Construct a symmetric strategy profile
+    \begin{enumerate}
+        \item They define a maximal return (function) operator $H^{\circ *}_{1,u_1}:\mathcal{V}_1^\circ \to \mathcal{V}_1^\circ$ pointwise by 
+        \begin{equation*}
+            \begin{split}
+                \left( H_{1, u_1^\circ}^{\circ *} V_1^\circ \right)(\omega_1, \sigma_1)& =
+    \sup_{\tilde{u}_1^\circ (\omega_1, \sigma_1) \in \mathcal{U}_1^\circ (\omega_1, \sigma_1)}
+    h_1^\circ \left( (\omega_1, \sigma_1), \tilde{u}_1^\circ (\omega_1, \sigma_1), \right.\\
+    & \left. u_1^\circ (\tau_2 (\tau_1^{-1} (\omega_1, \sigma_1))), \dots, 
+    u_1^\circ (\tau_N (\tau_1^{-1} (\omega_1, \sigma_1))), V_1^\circ \right)
+            \end{split}
+        \end{equation*}
+     This operator satisfies the requirement of the contraction mapping theorem therefore there exists a maximal return function $V_{1, u_1^\circ}^{\circ *} = H_{1, u_1^\circ}^{\circ *} V_{1, u_1^\circ}^{\circ *}$
+    \item Given the maximal return function, they define a best-reply correspondence (which is later proven to be a function) by 
+    \begin{equation*}
+        \begin{split}
+        \Upsilon_1^\circ (u_1^\circ) = 
+        \Bigg\{ \tilde{u}_1^\circ \in \mathcal{U}_1^\circ : 
+        \tilde{u}_1^\circ (\omega_1, \sigma_1) \in  
+        \arg \sup_{\tilde{u}_1^\circ (\omega_1, \sigma_1) \in \mathcal{U}_1^\circ (\omega_1, \sigma_1)}
+        h_1^\circ \Big( (\omega_1, \sigma_1), \tilde{u}_1^\circ (\omega_1, \sigma_1), \\
+        u_1^\circ (\tau_2 (\tau_1^{-1} (\omega_1, \sigma_1))), \dots, 
+        u_1^\circ (\tau_N (\tau_1^{-1} (\omega_1, \sigma_1))), V_{1, u_1^\circ}^{\circ *} \Big)
+        \text{ for all } (\omega_1, \sigma_1) \Bigg\}.
+        \end{split}
+        \end{equation*}        
+This correspondence (function) is nonempty, single valued and upper hemicontinuous hence the Brouwer's fixed-point theorem holds such that there is fixed point $u_1^{\circ *}\in \mathcal{U}_1^\circ$. 
+\item With $u_1^{\circ *}$ they construct(impose) the same policy profile for every firm and hence the associated value function for every firm. 
+\end{enumerate}
+
+\item Show that the symmetric strategy profile is indeed an equlibrium: While I origianlly thought that the proof would stop at the first step subce I thougth the candidate equlibrium is by construction an equilibrium. In the proof of the first existence result, the proof stops after applying the fixed point theorem to find a strategy profile $u$. This is not exactly the case here. Because the $u_1^{\circ *}$ is only saying that given others playing $u_1^{\circ *}$, firm 1's best reply should also be $u_1^{\circ *}$. But we have not shown that $u_1^{\circ *}$ is also every other frim's best reply. However since we impose that firms are identical in the sense of sharing common (policy and value) functions, then it is intuitively straightforward to see that every firm having $u_1^{\circ *}$ is indeed an equilibrium. 
+     
+\end{enumerate}
+
+The existence results appeal to me a lot however even when the model primitives satisfy the assumptions imposed, the theorem is saying that there exists a symmetric equilibrium but does not rule out the case that there also exist asymmetric equilibrium. Similarly for the pure strategy equilibrium argument, it does not rule out the existence of mixed strategy equilibirum. Therefore, I am curious about the comparison between payoff under mixed strategy, pure strategy asymmetric and pure strategy symmetric equilibrium. For the latter two comparison, with a small $M$ and $N$ it is computable while I do not know the computation feasibility for the first. In any case, the symmetry is something we believe to be true for the reality and therefore picked out of all possible equilibrium.
+
+\pagebreak \newpage \bibliography{../References/ref.bib}
+
+\end{document}
+
