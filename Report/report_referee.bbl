@@ -1,0 +1,23 @@
+\begin{thebibliography}{}
+
+\bibitem[Doraszelski and Satterthwaite, 2010]{doraszelski2010computable}
+Doraszelski, U. and Satterthwaite, M. (2010).
+\newblock Computable markov-perfect industry dynamics.
+\newblock {\em The RAND Journal of Economics}, 41(2):215--243.
+
+\bibitem[Ericson and Pakes, 1995]{ericson1995markov}
+Ericson, R. and Pakes, A. (1995).
+\newblock Markov-perfect industry dynamics: A framework for empirical work.
+\newblock {\em The Review of economic studies}, 62(1):53--82.
+
+\bibitem[Harsanyi, 1973]{harsanyi1973games}
+Harsanyi, J.~C. (1973).
+\newblock Games with randomly disturbed payoffs: A new rationale for mixed-strategy equilibrium points.
+\newblock {\em International journal of game theory}, 2(1):1--23.
+
+\bibitem[Pakes and McGuire, 1994]{pakes1994computing}
+Pakes, A. and McGuire, P. (1994).
+\newblock Computing markov-perfect nash equilibria: Numerical implications of a dynamic differentiated product model.
+\newblock {\em The Rand Journal of Economics}, pages 555--589.
+
+\end{thebibliography}
