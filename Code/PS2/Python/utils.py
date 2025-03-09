@@ -23,8 +23,7 @@ def static_profit(c):
     binom = np.hstack((np.zeros((nfmax + kmax + 2, 1), dtype=int), binom))  # Add leading zero column
 
     for i in range(1, nfmax + kmax + 2):
-        binom[i, 1:i] = binom[i - 1, 1:i] + binom[i - 1, :i - 1]
-
+        binom[i, 1:i+1] = binom[i - 1, 1:i+1] + binom[i - 1, :i]
     for nfirms in range(1,nfmax+1):
         print(f"\nFirms: {nfirms}")
 
@@ -41,7 +40,7 @@ def static_profit(c):
         profit = ccprofit(nfirms, descn, binom, D, f, ggamma)
 
         # Save output
-        filename = f"a.{c['PREFIX']}_pr{nfirms}.npz"
+        filename = f"Data/Out/a.{c['PREFIX']}_pr{nfirms}.npz"
         np.savez(filename, profit=profit)
 
     c["PROFIT_DONE"] = 1  # Mark profit computation as done
@@ -73,11 +72,11 @@ def ccprofit(nfirms, descn, binom, D, f, ggamma):
 
         # Solve for Cournot equilibrium: Reduce number of firms until all produce positive quantity
         n = nfirms
-        p = (D + np.sum(theta[:n])) / (n + 1)  # Equilibrium price
+        p = (D + np.sum(theta)) / (n + 1)  # Equilibrium price
 
         while not ((p - theta[n - 1] >= 0) or (n == 1)):  # Reduce n if price makes last firm unprofitable
             n -= 1
-            p = (D + np.sum(theta[:n])) / (n + 1)
+            p = (D + np.sum(theta)) / (n + 1)
 
         q = np.zeros(nfirms)  # Initialize output quantities
         if p - theta[n - 1] > 0:  # Ensure positive quantity production
@@ -86,10 +85,9 @@ def ccprofit(nfirms, descn, binom, D, f, ggamma):
         quan = q  # Equilibrium quantity
 
         pstar = D - np.sum(quan)  # Equilibrium price
-        profstar = (pstar > theta) * (pstar - theta) * quan - f  # Compute profits
-
+        profstar = (pstar > theta) * (pstar - theta) * quan - f # Compute profits
         profit[i, :] = profstar  # Store computed profits
-
+        
     return profit
 
 def decode(code, nfirms, binom):
@@ -105,18 +103,16 @@ def decode(code, nfirms, binom):
         list: Weakly descending N-tuple.
     """
     ntuple = np.zeros(nfirms, dtype=int)  # Initialize output n-tuple
-    w = len(ntuple) - 1  # Maximum possible value for tuple elements
-
+    
     # Iterate over each firm
     for i in range(nfirms):
-        # Find the largest possible value for the current tuple element
-        while binom[nfirms - i + w, w + 1] > code:
-            w -= 1
-        
-        # Assign the decoded value ensuring a weakly descending order
-        ntuple[i] = w + 1
-        # Adjust the code value
-        code -= binom[nfirms - i + w, w + 1]
+        row = nfirms - i - 1
+        col = 1
+        while (code >= binom[row, col]):
+            code -= binom[row, col]
+            row += 1
+            col += 1
+        ntuple[i] = col-1
 
     return ntuple.tolist()
 
@@ -134,12 +130,9 @@ def encode(ntuple, nfirms, binom):
         int: Encoded integer state code.
     """
     code = 0  # Initialize encoded state code
-    w = 0  # Tracks the largest element processed
-
-    # Iterate over each firm
     for i in range(nfirms):
-        w = ntuple[i] - 1  # Convert to zero-based index
-        code += binom[nfirms - i + w, w + 1]  # Add the skipped states
+        for j in range(ntuple[i]):
+            code += binom[nfirms - i -1 +j ,1+j]
 
     return code
 
@@ -154,7 +147,7 @@ def qdecode(code, dtable):
     Returns:
         numpy.ndarray: Decoded weakly descending n-tuple.
     """
-    return dtable[:, code]  # Retrieve the n-tuple from the decoding table
+    return dtable[:, code].copy()   # Retrieve the n-tuple from the decoding table
 
 def qencode(ntuple, etable, multfac):
     """
@@ -165,11 +158,11 @@ def qencode(ntuple, etable, multfac):
         etable (numpy.ndarray): Encoding lookup table.
         multfac (numpy.ndarray): Multiplication factor for encoding.
 
-    Returns:
+    Returns:s
         int: Encoded integer state code.
     """
-    index = np.sum(np.array(ntuple) * np.array(multfac)) + 1  # Compute index
-    return etable[index]  # Lookup encoded value
+    index = np.sum(np.array(ntuple) * np.array(multfac)).astype(int)+ 1  # Compute index
+    return etable[index-1]  # Lookup encoded value
 
 def calcval(place, w, x, k, oldvalue, etable, multfac, two_n, kmax, nfirms, mask, delta, a):
     """
@@ -198,7 +191,7 @@ def calcval(place, w, x, k, oldvalue, etable, multfac, two_n, kmax, nfirms, mask
     z1 = np.zeros(nfirms, dtype=int)  # Lower bound (0)
     z2 = np.full(nfirms, kmax, dtype=int)  # Upper bound (kmax)
 
-   # Adjust "mask" based on firm's position
+    # Adjust "mask" based on firm's position
     if nfirms > 1:
         zeros_row = np.zeros((1, two_n))
         if place == 1:
@@ -238,18 +231,23 @@ def calcval(place, w, x, k, oldvalue, etable, multfac, two_n, kmax, nfirms, mask
         e = np.maximum(e, z1)
         d = np.minimum(d, z2)
         pl1 = np.argmax(temp[:, 1])  # Find "place" in the new state
-
+     
+        # issue: turn every one dimensional vector into a matrix
         # Update expected value for staying at efficiency level
         val_stay += ((1 - delta) * oldvalue[qencode(d.tolist(), etable, multfac), pl1] +
                      delta * oldvalue[qencode(e.tolist(), etable, multfac), pl1]) * probmask
 
         # **Task Completed: Compute value for k_v + 1 (moving up in efficiency)**
         new_d = d.copy()
-        new_d[pl1] = min(new_d[pl1] + 1, kmax)  # Increase efficiency level
-        
+        new_d[pl1] = new_d[pl1] + 1  # Increase efficiency level
+        new_e = new_d - 1  # Aggregate shock
+
+        new_e = np.maximum(new_e, z1)  # Check lower bound
+        new_d = np.minimum(new_d, z2)  # Check upper bound
+
         # Compute expected value when firm moves up
         val_up += ((1 - delta) * oldvalue[qencode(new_d.tolist(), etable, multfac), pl1] +
-                   delta * oldvalue[qencode(e.tolist(), etable, multfac), pl1]) * probmask
+                   delta * oldvalue[qencode(new_e.tolist(), etable, multfac), pl1]) * probmask
 
     return val_up, val_stay
 
@@ -296,10 +294,11 @@ def optimize(w, oldvalue, oldx, isentry, profit, dtable, etable, multfac, two_n,
                 if locwx[k] <= locwx[j]:
                     locwx[k] = 0  # Mark as exited
 
-    ## **Entry Decision: Compute Entry Probability**
+    ## **Entry Decision: Compute Entry Probability** 
     locwe = locwx.copy()  # Copy state for entry decision
     if locwe[-1] == 0:  # If the last position is empty, entry is possible
         locwe[-1] = entry_k  # Assign entry efficiency level
+    # issue: how about the computation of entry probability? isn't it already done in the contract function?
 
     ## **Compute Optimal Investment Strategy**
     for j in range(nfirms):
@@ -307,20 +306,37 @@ def optimize(w, oldvalue, oldx, isentry, profit, dtable, etable, multfac, two_n,
             nval[j] = phi
             continue
 
-        # Compute continuation values for investing and not investing
+        # Compute (sub)continuation values when the potential entrant does not enter $\tilde{u}$
         val_up, val_stay = calcval(j + 1, locwx, ox, locwx[j], oldvalue, etable, multfac, two_n, kmax, nfirms, mask, delta, a)
 
-        # Compute expected value
-        expected_val = (1 - isentry[w]) * val_stay + isentry[w] * val_up
+        # Compute (sub)continuation values when the potential entrant enters $\tilde{u}$
+        val_up_e, val_stay_e = calcval(j + 1, locwe, ox, locwe[j], oldvalue, etable, multfac, two_n, kmax, nfirms, mask, delta, a)
+        
+        p_up = (a * ox[j]) / (1 + a * ox[j])  # Probability of moving up
 
-        # Compute optimal investment using a simple closed-form formula
-        nx[j] = max(0, min(1, (expected_val - profit[w, j]) / a))
+        # Compute expected value \tilde{v}
+        expected_val = (1 - isentry[w])*(p_up*val_up+(1-p_up)*val_stay)+(isentry[w])*(p_up*val_up_e+(1-p_up)*val_stay_e)
 
-        # Compute new value function with investment
+        # Compute optimal investment level using closed form formula
+        # double check the optimal investment formula
+        nx[j] = max(0,1/a*(np.sqrt(a*((1-isentry[w])*(val_up)+isentry[w]*val_up_e-((1-isentry[w])*(val_stay)+isentry[w]*val_stay_e))*beta)-1))
+        
+         # Update value function with investment
         nval[j] = profit[w, j] + beta * expected_val
 
-    return nx.tolist(), nval.tolist()
+        # Optional refinement: recheck exit decision
+        if nval[j] < phi:
+            nval[j] = phi
+            nx[j] = 0
+            locwx[j] = 0
+            for k in range(j+1, nfirms):
+                if locwx[k] <= locwx[j]:
+                    locwx[k] = 0
 
+        # Update investment policy for remaining firms
+        ox[j] = nx[j]
+
+    return nx.tolist(), nval.tolist()
 
 
 def contract(oldvalue, oldx, profit, dtable, etable, multfac, wmax, two_n, kmax, nfirms, mask, x_entryl, x_entryh, phi, entry_k, beta, delta, a):
@@ -350,6 +366,8 @@ def contract(oldvalue, oldx, profit, dtable, etable, multfac, wmax, two_n, kmax,
     Returns:
         tuple: (newvalue, newx, isentry) - Updated value function, policy, and entry probabilities.
     """
+
+
     ## **Step 1: Entry Decision Calculation**
     isentry = np.zeros(wmax)  # Initialize entry probability
 
@@ -410,32 +428,35 @@ def eql_ma(c):
     binom = np.eye(rlnfirms + kmax + 1, dtype=int)
     binom = np.hstack((np.zeros((rlnfirms + kmax + 1, 1), dtype=int), binom))
     
-    for i in range(2, rlnfirms + kmax + 1):
-        binom[i, 1:i] = binom[i - 1, 1:i] + binom[i - 1, :i - 1]
+    for i in range(1, rlnfirms + kmax + 1):
+        binom[i, 1:i+1] = binom[i - 1, 1:i+1] + binom[i - 1, :i]
+        
 
     # Solve for the game starting with small firms and expanding
     for nfirms in range(stfirm, rlnfirms + 1):
-        wmax = binom[nfirms + kmax + 1, kmax + 2]  # Compute number of industry states
+        wmax = binom[nfirms + kmax, kmax + 1]  # Compute number of industry states
         
         print(f"\nFirms: {nfirms}   States: {wmax}\nInitialization ...")
 
         # Load profit data
-        filename = f"a.{c['PREFIX']}_pr{nfirms}.npz"
+        filename = f"Data/Out/a.{c['PREFIX']}_pr{nfirms}.npz"
         profit = np.load(filename)["profit"]
 
         two_n = 2 ** (nfirms - 1)  # Number of rival actions
 
         # Generate binary matrix of all rival investment outcomes
-        mask = np.array([[int(x) for x in format(i, f"0{nfirms-1}b")] for i in range(2 ** (nfirms - 1))])
-
+        # Generate binary representations
+        binary_strings = [format(i, f'0{nfirms-1}b') for i in range(two_n)]
+        mask = np.array([[int(bit) for bit in binary_string] for binary_string in binary_strings]).T
+       
         ## Create decoding table: maps state index to industry structure
         dtable = np.zeros((nfirms, wmax), dtype=int)
         for i in range(wmax):
             dtable[:, i] = decode(i, nfirms, binom)
-
-        ## Create encoding table
-        multfac = (kmax + 1) ** np.arange(nfirms)  # Allows mapping without sorting
-
+        
+        ## Create encoding table # not sure how it is done
+        multfac = (kmax + 1) ** np.arange(nfirms)  # Allows mapping without sorting # 0 to nfirm-1
+        
         # Generate all possible states
         wgrid = np.meshgrid(*[np.arange(kmax + 1)] * nfirms, indexing="ij")
         wtable = np.column_stack([wg.flatten() for wg in wgrid])
@@ -443,9 +464,13 @@ def eql_ma(c):
 
         # Encode each state into a unique index
         etable = np.array([encode(w.tolist(), nfirms, binom) for w in wtable])
-
+        np.savez(f"Data/Out/a.{c['PREFIX']}_table{nfirms}.npz", dtable = dtable, mulfac=multfac,etable=etable)
         ## Initialize value and policy functions
-        oldvalue, oldx = initialize(dtable, nfirms, wmax, binom, None, None)
+        # issue
+        if nfirms == 1:
+            oldvalue, oldx = initialize(dtable, nfirms, wmax, binom, None, None)
+        else:
+            oldvalue, oldx = initialize(dtable, nfirms, wmax, binom, newvalue, newx)
 
         ## Perform iterations using contraction mapping
         print("Contraction ...")
@@ -476,7 +501,7 @@ def eql_ma(c):
 
         ## Save results
         prising = a * newx / (1 + a * newx)
-        np.savez(f"a.{c['PREFIX']}_markov{nfirms}.npz", newvalue=newvalue, newx=newx, prising=prising, isentry=isentry)
+        np.savez(f"Data/Out/a.{c['PREFIX']}_markov{nfirms}.npz", newvalue=newvalue, newx=newx, prising=prising, isentry=isentry)
 
     c["EQL_DONE"] = 1  # Mark equilibrium computation as complete
 
@@ -500,6 +525,8 @@ def initialize(dtable, nfirms, wmax, binom, newvalue, newx):
 
     if nfirms == 1:
         oldvalue = 1 + 0.1 * np.arange(1, wmax + 1)  # Base case for a single firm
+        # reshape to 2d array
+        oldvalue = oldvalue.reshape(-1, 1)
     else:
         for w in range(wmax):
             tuple_w = qdecode(w, dtable)  # Decode the state
@@ -520,3 +547,59 @@ def initialize(dtable, nfirms, wmax, binom, newvalue, newx):
 
     return oldvalue, oldx
 
+def ds_ma(c, out_file):
+    """
+    Simulates the dynamic oligopoly game for a specified number of periods 
+    and computes summary statistics.
+
+    Args:
+        c (dict): Model parameters containing:
+            - DS_WSTART (list or np.ndarray): Initial state for simulation.
+            - DS_NSIMX (int): Number of simulation periods.
+        out_file (str): Output file name for saving results.
+    """
+    wstart = np.array(c["DS_WSTART"])  # Initial state for simulation
+    numtimes = c["DS_NSIMX"]  # Number of simulation periods
+    a = c["INV_MULT"]  # Investment cost multiplier
+    delta = c["DELTA"]  # Probability of industry aggregate decline
+    kmax = c["KMAX"] # Maximum efficiency level
+    nfirms = len(wstart) # Number of firms
+
+    # Initialize state tracking
+    state_history = np.zeros((numtimes, len(wstart)), dtype=int)
+    firms_count = np.zeros(numtimes, dtype=int)  # Track active firms count
+    investment_history = np.zeros((numtimes, len(wstart)), dtype=float)  # Track total investment
+
+    # Simulate all the aggregate shocks with Bernoulli distribution with probability delta
+    nu = np.random.binomial(1, delta, numtimes)
+
+    # Load equilibrium results
+    newx = np.load(f"Data/Out/a.{c['PREFIX']}_markov{nfirms}.npz")["newx"]
+    newvalue= np.load(f"Data/Out/a.{c['PREFIX']}_markov{nfirms}.npz")["newvalue"]
+
+    # Load encoding table
+    multfac = np.load(f"Data/Out/a.{c['PREFIX']}_table{nfirms}.npz")["mulfac"]
+    etable = np.load(f"Data/Out/a.{c['PREFIX']}_table{nfirms}.npz")["etable"]
+
+    # Initialize the state
+    current_state = wstart.copy()
+
+    for t in range(numtimes):
+        # Step 1: Solve for the optimal entry/exit and investment decision
+        state_code = qencode(current_state.tolist(), etable, multfac)
+        investment_policy = newx[state_code, :]
+
+        # Step 2: Simulate the individual shocks
+        individual_shocks_prob = (a * investment_policy) / (1 + a * investment_policy)
+        individual_shocks = np.random.binomial(1, individual_shocks_prob)
+
+        # Step 3: Update the state of the industry
+        current_state = np.maximum(np.minimum(current_state + individual_shocks - nu[t], kmax),0)
+        
+        # Record the state and investment
+        state_history[t, :] = current_state
+        firms_count[t] = np.sum(current_state > 0)
+        investment_history[t, :] = investment_policy
+
+    # Save results
+    np.savez(out_file, state_history=state_history, firms_count=firms_count, investment_history=investment_history)

@@ -7,7 +7,7 @@ def runit():
     """
     # Model Parameters
     c = {
-        "MAX_FIRMS": 3,  # Max number of active firms
+        "MAX_FIRMS": 2,  # Max number of active firms
         "KMAX": 19,  # Max efficiency level
         "START_FIRMS": 1,  # Start equilibrium computation with 1 firm
         "ENTRY_LOW": 0.15,  # Lower bound for entry cost
@@ -24,7 +24,7 @@ def runit():
         "PROFIT_DONE": 0,  # Indicator for profit computation
         "EQL_DONE": 0,  # Indicator for equilibrium computation
         "PREFIX": "cc",  # Prefix for saved results
-        "DS_WSTART": np.array([6] + [0] * 2),  # Initial state for simulation (ENTRY_AT+2)
+        "DS_WSTART": np.array([2,2]),  # Initial state for simulation (ENTRY_AT+2)
         "DS_NSIMX": 10000  # Number of simulation periods
     }
 
@@ -38,20 +38,23 @@ def runit():
 
     ## **Simulate Entry & Exit**
     print("Simulating industry evolution (Baseline case)...")
-    ds_ma(c, "baseline.npz")
+    ds_ma(c, "Data/Out/baseline.npz")
 
-    ## **Low Entry Cost Case**
-    c["ENTRY_LOW"] = 0.01
-    c["ENTRY_HIGH"] = 0.11
+    # ## **Low Entry Cost Case**
+    # c["ENTRY_LOW"] = 0.01
+    # c["ENTRY_HIGH"] = 0.11
+    # c["PREFIX"] = "cc_low"
 
-    print("Computing static profits for low entry cost case...")
-    static_profit(c)
+    # print("Computing static profits for low entry cost case...")
+    # static_profit(c)
 
-    print("Solving for equilibrium under low entry cost...")
-    eql_ma(c)
+    # print("Solving for equilibrium under low entry cost...")
+    # eql_ma(c)
 
-    print("Simulating industry evolution (Low entry cost case)...")
-    ds_ma(c, "low_entry_cost.npz")
+    # print("Simulating industry evolution (Low entry cost case)...")
+    # ds_ma(c, "Data/Out/low_entry_cost.npz")
 
 if __name__ == "__main__":
     runit()
+    investment = np.load("Data/Out/baseline.npz")["investment_history"]
+    print(investment)
