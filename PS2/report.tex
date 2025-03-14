@@ -62,7 +62,15 @@ The trick is to make use of the following binomial coefficient matrix.
         0 & 1 & 5 & 10 & 10 & 5 & 1 \\
     \end{array}
 \end{equation*}
-We have 3 firms. For the 1st firm, we start by the value at the 3rd row. Compare the code 8 to this value, deduct the value from code, move to the bottom right by one step. Stop when the code is smaller than the value in the matrix. Then we find the state for the first position by the number of times we have moved. For the 2nd firm, we start by the alue at the 2nd row, etc.
+We have 3 firms. For the 1st firm, we start by the value at the 3rd row.
+\begin{enumerate}
+    \item Compare the code 8 to this value
+    \item Deduct the value from code
+    \item Move to the bottom right by one step
+    \item Stop when the code is smaller than the value in the matrix
+    \item Then we find the state for the first position by the number of times we have moved。
+\end{enumerate}
+For the 2nd firm, we start by the value at the 2nd row, etc.
 
 \begin{algorithm}[!htbp]
     \caption{Decode an integer state code into a weakly descending n-tuple}
@@ -177,15 +185,15 @@ We have 3 firms. For the 1st firm, we start by the value at the 3rd row. Compare
         \EndFor
 
         \Comment{Investment decision}
-        \State $\text{investmentPolicyolicy} \gets (\text{currentState} > 0) * (\text{newx}[\text{stateCode}, :][\text{sortedIndex}])$
-        \State $\text{investmentHistory}[t, :] \gets \text{investmentPolicyolicy}$
+        \State $\text{investmentPolicy} \gets (\text{currentState} > 0) * (\text{newx}[\text{stateCode}, :][\text{sortedIndex}])$
+        \State $\text{investmentHistory}[t, :] \gets \text{investmentPolicy}$
         \Comment{Let entrant enter!}
         \If{$\text{entry}$}
         \State $\text{currentState}[\text{entryIndex}] \gets \text{entryLevel}$
         \EndIf
 
         \Comment{Simulate individual shocks}
-        \State $\Pr(\tau_j = 1) \gets \frac{a \cdot \text{investmentPolicyolicy}}{1 + a \cdot \text{investmentPolicyolicy}}$
+        \State $\Pr(\tau_j = 1) \gets \frac{a \cdot \text{investmentPolicy}}{1 + a \cdot \text{investmentPolicy}}$
         \State $\tau_j \sim \text{Binomial}(1, \Pr(\tau_j = 1))$
 
         \Comment{Update industry state}
