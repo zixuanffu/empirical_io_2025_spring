@@ -1,0 +1,48 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k}{def} \PYG{n+nf}{decode}\PYG{p}{(}\PYG{n}{code}\PYG{p}{,} \PYG{n}{nfirms}\PYG{p}{,} \PYG{n}{binom}\PYG{p}{):}
+\PYG{+w}{    }\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Decodes an integer state code into a weakly descending n\PYGZhy{}tuple.}
+
+\PYG{l+s+sd}{    Args:}
+\PYG{l+s+sd}{        code (int): Encoded integer state index.}
+\PYG{l+s+sd}{        nfirms (int): Number of firms (size of the tuple).}
+\PYG{l+s+sd}{        binom (numpy.ndarray): Binomial coefficient matrix.}
+
+\PYG{l+s+sd}{    Returns:}
+\PYG{l+s+sd}{        list: Weakly descending N\PYGZhy{}tuple.}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{ntuple} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{(}\PYG{n}{nfirms}\PYG{p}{,} \PYG{n}{dtype}\PYG{o}{=}\PYG{n+nb}{int}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} Initialize output n\PYGZhy{}tuple}
+    
+    \PYG{c+c1}{\PYGZsh{} Iterate over each firm in the tuple}
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{nfirms}\PYG{p}{):}
+        \PYG{n}{row} \PYG{o}{=} \PYG{n}{nfirms} \PYG{o}{\PYGZhy{}} \PYG{n}{i} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}
+        \PYG{n}{col} \PYG{o}{=} \PYG{l+m+mi}{1}
+        \PYG{k}{while} \PYG{p}{(}\PYG{n}{code} \PYG{o}{\PYGZgt{}=} \PYG{n}{binom}\PYG{p}{[}\PYG{n}{row}\PYG{p}{,} \PYG{n}{col}\PYG{p}{]):}
+            \PYG{n}{code} \PYG{o}{\PYGZhy{}=} \PYG{n}{binom}\PYG{p}{[}\PYG{n}{row}\PYG{p}{,} \PYG{n}{col}\PYG{p}{]}
+            \PYG{n}{row} \PYG{o}{+=} \PYG{l+m+mi}{1}
+            \PYG{n}{col} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{n}{ntuple}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{n}{col}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+
+    \PYG{k}{return} \PYG{n}{ntuple}
+
+
+\PYG{k}{def} \PYG{n+nf}{encode}\PYG{p}{(}\PYG{n}{ntuple}\PYG{p}{,} \PYG{n}{nfirms}\PYG{p}{,} \PYG{n}{binom}\PYG{p}{):}
+\PYG{+w}{    }\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Encodes a weakly descending n\PYGZhy{}tuple into an integer state code.}
+
+\PYG{l+s+sd}{    Args:}
+\PYG{l+s+sd}{        ntuple (list): Weakly descending n\PYGZhy{}tuple.}
+\PYG{l+s+sd}{        nfirms (int): Number of firms.}
+\PYG{l+s+sd}{        binom (numpy.ndarray): Binomial coefficient matrix.}
+
+\PYG{l+s+sd}{    Returns:}
+\PYG{l+s+sd}{        int: Encoded integer state code.}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{code} \PYG{o}{=} \PYG{l+m+mi}{0}  \PYG{c+c1}{\PYGZsh{} Initialize state code}
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{nfirms}\PYG{p}{):}
+        \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{ntuple}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]):}
+            \PYG{n}{code} \PYG{o}{+=} \PYG{n}{binom}\PYG{p}{[}\PYG{n}{nfirms} \PYG{o}{\PYGZhy{}} \PYG{n}{i} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1} \PYG{o}{+}\PYG{n}{j} \PYG{p}{,}\PYG{l+m+mi}{1}\PYG{o}{+}\PYG{n}{j}\PYG{p}{]}
+
+    \PYG{k}{return} \PYG{n}{code}
+\end{Verbatim}

@@ -12,6 +12,9 @@
 \usepackage{adjustbox} % for regression table display
 \usepackage{threeparttable} % to use table notes
 \usepackage{natbib} % for bibliography
+% \usepackage{minted} % for code highlighting
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \input newcommand.tex
 \bibliographystyle{apalike}
 % \setlength{\parindent}{0pt} \renewcommand{\thesection}{Question \arabic{section}}
@@ -38,7 +41,135 @@
 
 \section{Tasks}
 \subsection{State space}
+\paragraph{decode}Let's see an example of decoding code 8 (index-0 based) to state ntuple $(2,2,1)$.
+\begin{equation*}
+    \begin{array}{cccccccccccc}
+        0 & 1 & 1 & 1 & 2 & 2 & 2 & 2 & 2 & 2 & \ldots \\
+        0 & 0 & 1 & 1 & 0 & 1 & 1 & 2 & 2 & 2 & \ldots \\
+        0 & 0 & 0 & 1 & 0 & 0 & 1 & 0 & 1 & 2 & \ldots \\
+    \end{array}
+\end{equation*}
+The trick is to make use of the following binomial coefficient matrix.
+\begin{equation*}
+    \begin{array}{ccccccc}
+        0 & 1 &   &    &            \\
+        0 & 1 & 1 &    &            \\
+        0 & 1 & 2 & 1  &            \\
+        0 & 1 & 3 & 3  & 1          \\
+        0 & 1 & 4 & 6  & 4  & 1     \\
+        0 & 1 & 5 & 10 & 10 & 5 & 1 \\
+    \end{array}
+\end{equation*}
+We have 3 firms. For the 1st frim, we start by the value at the 3rd row. Compare the code 8 to this value, deduct the value from code, move to the bottom right by one step. Stop when the code is smaller than the value in the matrix. Then we find the state for the first position by the number of times we have moved. For the 2nd firm, we start by the alue at the 2nd row, etc.
+
+\begin{algorithm}[!htbp]
+    \caption{Decode an integer state code into a weakly descending n-tuple}
+    \begin{algorithmic}[1]
+        \Function{Decode}{code, nfirms, binom}
+        \State ntuple $\gets$ \textbf{zeros}(nfirms) \Comment{Initialize output n-tuple}
+
+        \For{$i = 0$ to $nfirms - 1$}
+        \State row $\gets$ nfirms - i - 1
+        \State col $\gets$ 1
+        \While{code $\geq$ binom[row, col]}
+        \State code $\gets$ code - binom[row, col]
+        \State row $\gets$ row + 1
+        \State col $\gets$ col + 1
+        \EndWhile
+        \State ntuple[i] $\gets$ col - 1
+        \EndFor
+
+        \State \Return ntuple
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+\paragraph{encode}Similarly, encoding $(2,2,1)$ to code 8 is to move along the binom matrix. Summing up 1,3,1,2,1 to get 8.
+
+\begin{algorithm}
+    \caption{Encode a weakly descending n-tuple into an integer state code}
+    \begin{algorithmic}[1]
+        \Function{Encode}{ntuple, nfirms, binom}
+        \State code $\gets$ 0 \Comment{Initialize state code}
+
+        \For{$i = 0$ to $nfirms - 1$}
+        \For{$j = 0$ to $ntuple[i] - 1$}
+        \State code $\gets$ code + binom[$nfirms - i - 1 + j$, $1 + j$]
+        \EndFor
+        \EndFor
+
+        \State \Return code
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
 \subsection{Equilibrium computation}
+\paragraph{continuation value} Given a state ntuple $\omega$, and the position $j$ we calculate the \verb|val_up| when the firm $j$ receives a positive $\tau_j=1$ and $val_up$ when the firm $j$ receives $\tau_j=0$.
+\begin{algorithm}
+    \caption{Compute continuation value for moving up and staying at the same efficiency level}
+    \begin{algorithmic}[1]
+        \Function{CalcVal}{place, w, x, k, oldvalue, etable, multfac, two\_n, kmax, nfirms, mask, delta, a}
+        \State $z1 \gets$ zeros(nfirms) \Comment{Lower bound (0)}
+        \State $z2 \gets$ full(nfirms, kmax) \Comment{Upper bound (kmax)}
+
+        \Comment{Adjust "mask" based on firm's position}
+        \If{$nfirms > 1$}
+        \State $zeros\_row \gets$ zeros(1, two\_n)
+        \If{$place = 1$}
+        \State $locmask \gets$ stack([zeros\_row, mask])
+        \ElsIf{$place = nfirms$}
+        \State $locmask \gets$ stack([mask, zeros\_row])
+        \Else
+        \State $locmask \gets$ stack([mask[:place - 1], zeros\_row, mask[place - 1:]])
+        \EndIf
+        \Else
+        \State $locmask \gets$ zeros(1,1)
+        \EndIf
+
+        \Comment{Modify investment and state}
+        \State $x[place - 1] \gets 0$ \Comment{Own investment is set to zero}
+        \State $w[place - 1] \gets k$ \Comment{Own efficiency level is updated}
+        \State $justone \gets$ zeros(nfirms)
+        \State $justone[place - 1] \gets 1$ \Comment{Mark this firm's position}
+
+        \State $p\_up \gets (a \cdot x) / (1 + a \cdot x)$ \Comment{Probability of moving up}
+
+        \State $val\_up, val\_stay \gets 0$
+
+        \For{$i = 0$ to $two\_n - 1$}
+        \State $probmask \gets \prod (locmask[:, i] \cdot p\_up + (1 - locmask[:, i]) \cdot (1 - p\_up))$
+
+        \State $d \gets w + locmask[:, i]$ \Comment{Private shock}
+        \State $temp \gets$ stack([$d$, $justone$])
+        \State $temp \gets$ sort\_descending(temp)
+        \State $d \gets temp[:, 0]$
+        \State $e \gets d - 1$ \Comment{Aggregate shock}
+
+        \State $e \gets \max(e, z1)$
+        \State $d \gets \min(d, z2)$
+        \State $pl1 \gets$ argmax(temp[:, 1]) \Comment{Find "place" in new state}
+
+        \Comment{Update expected value for staying at efficiency level}
+        \State $val\_stay += ((1 - delta) \cdot oldvalue[qencode(d, etable, multfac), pl1]$
+        \State $ \quad + delta \cdot oldvalue[qencode(e, etable, multfac), pl1]) \cdot probmask$
+
+        \Comment{Compute value when moving up}
+        \State $new\_d \gets d$
+        \State $new\_d[pl1] \gets new\_d[pl1] + 1$
+        \State $new\_e \gets new\_d - 1$
+
+        \State $new\_e \gets \max(new\_e, z1)$
+        \State $new\_d \gets \min(new\_d, z2)$
+
+        \State $val\_up += ((1 - delta) \cdot oldvalue[qencode(new\_d, etable, multfac), pl1]$
+        \State $ \quad + delta \cdot oldvalue[qencode(new\_e, etable, multfac), pl1]) \cdot probmask$
+        \EndFor
+
+        \State \Return $(val\_up, val\_stay)$
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
 \subsection{Simulation}
 
 \newpage
