@@ -623,7 +623,6 @@ def ds_ma(c, out_file):
         firms_count_history[t] = np.sum(current_state > 0) # count of firm at the start of the period
 
         # issue: consider entry decision
-        locwe=current_state.copy()
         for i in range(nfirms):
             if current_state[i] == 0:
                 entry_prob = isentry[state_code]
@@ -654,30 +653,6 @@ def ds_ma(c, out_file):
 
         # Update the state of the industry
         current_state = np.maximum(np.minimum(current_state + individual_shocks - nu[t], kmax),0)
-    
-    # Plot the trajectory of value in position 1, 2, 3 in the state tuple
-    plt.figure(figsize=(12, 6))
-    plt.plot(state_history[:, 0], label='Position 1', color='blue')
-    plt.plot(state_history[:, 1], label='Position 2', color='green')
-    plt.plot(state_history[:, 2], label='Position 3', color='red')
-    plt.xlabel('Time Period')
-    plt.ylabel('Value')
-    plt.title('Trajectory of Value in Positions 1, 2, 3')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(f'Figures/{c["PREFIX"]}_value_trajectory.pdf')
-
-    # Plot the trajectory of investment in position 1, 2, 3 in the state tuple
-    plt.figure(figsize=(12, 6))
-    plt.plot(investment_history[:, 0], label='Position 1', color='blue')
-    plt.plot(investment_history[:, 1], label='Position 2', color='green')
-    plt.plot(investment_history[:, 2], label='Position 3', color='red')
-    plt.xlabel('Time Period')
-    plt.ylabel('Investment')
-    plt.title('Trajectory of Investment in Positions 1, 2, 3')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(f'Figures/{c["PREFIX"]}_investment_trajectory.pdf')
 
     # Take average 
     firms_count_avg = np.mean(firms_count_history)
