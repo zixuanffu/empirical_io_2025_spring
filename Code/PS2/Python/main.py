@@ -104,18 +104,11 @@ if __name__ == "__main__":
     print("Simulating industry evolution (Low entry cost case)...")
     ds_ma(c, "Data/Out/low_entry_cost")
 
-    # state = np.load("Data/Out/baseline.npz")["state_history"]
-    # print(state)
-    # investment = np.load("Data/Out/baseline.npz")["investment_history"]
-    # print(investment)
-    
+    state = np.load("Data/Out/baseline.npz")["state_history"]
+    print(state)
+    investment = np.load("Data/Out/baseline.npz")["investment_history"]
+    print(investment)
     firms_count_avg = np.load("Data/Out/baseline_avg.npz")["firms_count_avg"]
-    print("baseline average firm count", firms_count_avg)
+    print(firms_count_avg)
     investment_period_avg = np.load("Data/Out/baseline_avg.npz")["investment_period_avg"]
-    print("baseline average investment per period", investment_period_avg)
-
-    firms_count_avg = np.load("Data/Out/low_entry_cost_avg.npz")["firms_count_avg"]
-    print("low entry cost average firm count", firms_count_avg)
-    investment_period_avg = np.load("Data/Out/low_entry_cost_avg.npz")["investment_period_avg"]
-    print("low entry cost average investment per period", investment_period_avg)
-
+    print(investment_period_avg)
